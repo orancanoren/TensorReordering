@@ -77,8 +77,8 @@ void Dendrogram::connect(int u, int v) {
 
 	list<Vertex>::iterator u_ptr, v_ptr;
 	for (list<Vertex>::iterator it = vertices.begin(); it != vertices.end(); it++) {
-		if (*it == u) u_ptr = it;
-		else if (*it == v) v_ptr = it;
+		if (it->label == u) u_ptr = it;
+		else if (it->label == v) v_ptr = it;
 	}
 
 	newVertex.edge1 = u_ptr;

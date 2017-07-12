@@ -15,21 +15,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ordering.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="dendrogram.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="ordering.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ordering.cpp">
+    <ClCompile Include="dendrogram.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dendrogram.cpp">
+    <ClCompile Include="ordering.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

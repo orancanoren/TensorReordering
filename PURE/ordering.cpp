@@ -2,22 +2,13 @@
 #include <iostream>
 #include <unordered_map>
 #include <cassert>
-#include <queue>
+#include <list>
 #include <vector>
 #include <algorithm>
 
 #define _DEBUG_HIGH
 
 using namespace std;
-
-// Utilities
-
-class VertexComparator final : private Ordering {
-public:
-	bool operator() (const Vertex & v1, const Vertex & v2) {
-		return v1.edges.size() < v2.edges.size();
-	}
-};
 
 // Class Ordering
 
@@ -27,7 +18,9 @@ Ordering::Ordering(int vertexCount) : dendrogram(vertexCount){
 #ifdef _DEBUG_HIGH
 	cout << "Ordering constructor invoked" << endl;
 #endif
-	vertices.resize(vertexCount); // theta(V)	
+	vertices.resize(vertexCount); // theta(V)
+	new_id = vertexCount;
+	edgeCounter = 0;
 }
 
 Ordering::~Ordering() {
@@ -46,6 +39,7 @@ void Ordering::insertEdge(int from, int to) {
 
 	vertices[from].edges.insert({ to, 1 });
 	vertices[to].edges.insert({ from, 1 });
+	edgeCounter++;
 }
 
 void Ordering::rabbitOrder() {
@@ -65,30 +59,31 @@ void Ordering::mergeVertices(int u, int v) {
 #ifdef _DEBUG_HIGH
 	cout << "Ordering::mergeVertices() invoked" << endl;
 #endif
+	// 0 - If <u> and <v> are identical, no merge operation will be performed
 	if (u == v) return;
 
+	// 1 - Relable the vertex that's being merged on to ( <v> --> <v'> )
+	vertices[v].label = new_id++;
+
 	unordered_map<int, int> & u_edges = vertices[u].edges, &v_edges = vertices[v].edges;
-	// 1 - Reconnect edges connected to u, to v
-	for (unordered_map<int, int>::iterator it = u_edges.begin(); it != u_edges.end(); it++) {
-		if (it->first == v) {
+	// 2 - Reconnect edges connected to <u>, to <v'>
+	for (unordered_map<int, int>::iterator it = u_edges.begin(); it != u_edges.end(); it++) { // iterate over edges of <u>
+		int neighbor_id = it->first;
+		if (neighbor_id == v || neighbor_id == u) {
 			continue;
 		}
 
-		int id = it->first;
-		unordered_map<int, int> & it_edges = vertices[it->first].edges;
-
-		// Reconnect the edge incident on <*it> and <u>, such that it's now connecting <*it> and <v>
-		// If there already is such an edge, increase its weight
-		unordered_map<int, int>::iterator findResult = it_edges.find(u);
-		assert(findResult != it_edges.end());
+		unordered_map<int, int> & neighbor_edges = vertices[neighbor_id].edges;
+		unordered_map<int, int>::iterator findResult = neighbor_edges.find(u);
+		assert(findResult != neighbor_edges.end());
 		int edgeWeight = findResult->second;
-		it_edges.erase(findResult);
+		neighbor_edges.erase(findResult); // 2.1 - erase the edge connecting the current neighbor to <u>
 
-
-		findResult = v_edges.find(id);
+		// 2.2 - Create the edge incident on <u> and <v'>
+		findResult = v_edges.find(neighbor_id); 
 		if (findResult != v_edges.end()) {
 			findResult->second += edgeWeight;
-			vertices[id].edges[v] += edgeWeight;
+			vertices[neighbor_id].edges[v] += edgeWeight;
 		}
 		else {
 			vertices[it->first].edges.insert({ v, edgeWeight });
@@ -96,8 +91,7 @@ void Ordering::mergeVertices(int u, int v) {
 		}
 	}
 
-
-	// 2 - Build the self-loop on <v'>
+	// 3 - Build the self-loop on <v'>
 	unordered_map<int, int>::iterator v_u_edge = v_edges.find(u), v_v_edge = v_edges.find(v), u_u_edge = u_edges.find(u);
 	assert(v_u_edge != v_edges.end());
 	int loopWeight = 2 * (v_u_edge->second);
@@ -105,11 +99,11 @@ void Ordering::mergeVertices(int u, int v) {
 	loopWeight += (u_u_edge == u_edges.end() ? 0 : u_u_edge->second);
 	v_edges.insert({ v, loopWeight });
 
-	// 3 - vertex u no more exists, clear it
+	// 4 - vertex <u> no more exists, clear it
 	u_edges.clear();
 	v_edges.erase(v_u_edge);
 	vertices[u].merged = true;
-	// NOTE: The code assumes the degree of <v> doesn't change (it counts the loop)
+	// IMPORTANT NOTE: The code assumes the degree of <v> doesn't change (it counts the loop)
 }
 
 void Ordering::community_detection() {
@@ -128,14 +122,20 @@ void Ordering::community_detection() {
 		unordered_map<int, int> & edges = currentVertex.edges;
 		for (unordered_map<int, int>::const_iterator edge = edges.begin(); edge != edges.end(); edge++) {
 			int neighborLabel = edge->first;
+			if (vertices[neighborLabel].label == currentVertex.label) {
+				continue;
+			}
 
-			double currentModularity = modularity(neighborLabel, currentVertex.label);
+			double currentModularity = modularity(neighborLabel, iter->label);
 			if (currentModularity > maxModularityNeighbor.second) {
 				maxModularityNeighbor = { neighborLabel, currentModularity };
 			}
 		}
-		mergeVertices(maxModularityNeighbor.first, currentVertex.label);
-		dendrogram.connect(currentVertex.label, maxModularityNeighbor.first);
+		if (maxModularityNeighbor.second > 0) {
+			int previousLabel = vertices[maxModularityNeighbor.first].label;
+			mergeVertices(iter->label, maxModularityNeighbor.first);
+			dendrogram.connect(currentVertex.label, previousLabel);
+		}
 	}
 }
 
@@ -147,9 +147,17 @@ double Ordering::modularity(int u, int v) {
 	unordered_map<int, int>::iterator edge = vertices[u].edges.find(v);
 	assert(edge != vertices[u].edges.end());
 
-	unsigned int m = vertices.size();
-	double modularity = (((double)edge->second / (2.0 * m))
-		- ((double)vertices[u].edges.size() * (double)vertices[v].edges.size() / (2.0 * m * m)));
+	double m = edgeCounter;
+	double weighted_degree_u = 0.0;
+	double weighted_degree_v = 0.0;
 
+	for (unordered_map<int, int>::iterator u_edge = vertices[u].edges.begin(); u_edge != vertices[u].edges.end(); u_edge++) {
+		weighted_degree_u += u_edge->second;
+	}
+	for (unordered_map<int, int>::iterator v_edge = vertices[v].edges.begin(); v_edge != vertices[v].edges.end(); v_edge++) {
+		weighted_degree_v += v_edge->second;
+	}
+
+	double modularity = (((double)edge->second / (2.0 * m)) - (weighted_degree_u * weighted_degree_v / ((2.0 * m) * (2.0 * m))));
 	return modularity;
 }

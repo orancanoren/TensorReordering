@@ -13,7 +13,7 @@ public:
 
 	void insertEdge(int from, int to);
 	void rabbitOrder();
-protected:
+private:
 	struct Edge {
 		Edge(int dest) : weight(1), dest(dest) { }
 		double weight;
@@ -40,6 +40,8 @@ protected:
 
 	const std::vector<int> ordering_generation();
 	double modularity(int u, int v);
+	int new_id;
+	unsigned int edgeCounter;
 
 	std::vector<Vertex> vertices;
 	Dendrogram dendrogram;
@@ -62,7 +64,7 @@ public:
 		return excType;
 	}
 
-	const char * what() {
+	const char * what() const noexcept {
 		return msg;
 	}
 protected:
