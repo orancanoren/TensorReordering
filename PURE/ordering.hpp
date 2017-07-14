@@ -8,33 +8,28 @@
 
 class Ordering {
 public:
-	// TODO: make another constructor for graph input in CRS format
 	Ordering(int vertexCount);
 	~Ordering();
 
 	void insertEdge(int from, int to);
 	void rabbitOrder();
 private:
-	struct Edge {
-		Edge(int dest) : weight(1), dest(dest) { }
-		double weight;
-		int dest; // destination
-	};
-	struct Vertex {
-		Vertex() : label(labelCounter++), merged(false) { }
-		// keep a hashtable of edges
-		std::unordered_map<int, int> edges; // undirected edges
-		// degree of a vertex is kept in the unordered_map above by its size
+    struct Vertex {
+        Vertex() : label(labelCounter++), merged(false) { }
+        // keep a hashtable of edges
+        std::unordered_map<int, int> edges; // undirected edges
+        // degree of a vertex is kept in the unordered_map above by its size
+        
+        int label;
+        
+        bool operator < (const Vertex & rhs) const {
+            return this->edges.size() < rhs.edges.size();
+        }
+        
+        static int labelCounter; // will be used to give out labels
+        bool merged;
+    };
 
-		int label;
-
-		bool operator < (const Vertex & rhs) {
-			return this->edges.size() < rhs.edges.size();
-		}
-
-		static int labelCounter; // will be used to give out labels
-		bool merged;
-	};
 
 	void mergeVertices(int u, int v);
 	void community_detection();
@@ -43,6 +38,8 @@ private:
 	double modularity(int u, int v);
 	int new_id;
 	unsigned int edgeCounter;
+    
+    
 
 	std::vector<Vertex> vertices;
 	Dendrogram dendrogram;
