@@ -8,6 +8,7 @@
 
 class Ordering {
 public:
+	// TODO: make another constructor for graph input in CRS format
 	Ordering(int vertexCount);
 	~Ordering();
 
