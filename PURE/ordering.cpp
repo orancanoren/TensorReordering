@@ -5,8 +5,8 @@
 #include <list>
 #include <vector>
 #include <algorithm>
-
-#define _DEBUG_HIGH
+#include <fstream>
+#include <queue>
 
 using namespace std;
 
@@ -23,6 +23,28 @@ Ordering::Ordering(int vertexCount) : dendrogram(vertexCount){
 	edgeCounter = 0;
 }
 
+Ordering::Ordering(ifstream & is) {
+	// Input Format:
+	// * First line: <vertex count> <vertex count> <edge count>
+#ifdef _DEBUG_HIGH
+	cout << "Ordering constructor invoked" << endl;
+#endif
+	unsigned int vertexCount, edgeCount;
+	is >> vertexCount >> vertexCount >> edgeCount;
+	vertices.resize(vertexCount);
+
+	dendrogram = Dendrogram(vertexCount);
+
+	for (int i = 0; i < edgeCount; i++) {
+		int v1, v2, weight;
+		is >> v1 >> v2 >> weight;
+		insertEdge(v1, v2, weight);
+	}
+#ifdef _DEBUG_HIGH
+	cout << "Graph has been read successfully" << endl;
+#endif
+}
+
 Ordering::~Ordering() {
 #ifdef _DEBUG_HIGH
 	cout << "Ordering destructor invoked" << endl;
@@ -31,24 +53,52 @@ Ordering::~Ordering() {
 
 // Class Ordering | Public Member Function Definitions
 
-void Ordering::insertEdge(int from, int to) {
+void Ordering::insertEdge(int from, int to, int value) {
 #ifdef _DEBUG_HIGH
 	cout << "Ordering::insertEdge() invoked" << endl;
 #endif
 	if (from >= vertices.size() || from < 0) throw NotFound(VERTEX_NOT_FOUND);
 
-	vertices[from].edges.insert({ to, 1 });
-	vertices[to].edges.insert({ from, 1 });
+	vertices[from].edges.insert({ to, value });
+	vertices[to].edges.insert({ from, value });
 	edgeCounter++;
 }
 
-void Ordering::rabbitOrder() {
+void Ordering::rabbitOrder(ofstream & os) { // UNFINISHED!!!
+	// 0 - Calculate the new labels
 	community_detection();
-	const vector<int> new_labels = ordering_generation();
-	int index = 0;
-	for (vector<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++, index++) {
-		cout << index << " -> " << *it << endl;
+	new_labels = ordering_generation();
+
+	// 1 - relabel the vertices
+	for (vector<int>::iterator new_label = new_labels.begin(); new_label != new_labels.end(); new_label++) {
+		vertices[*new_label].label = new_label - new_labels.begin();
 	}
+
+	// 1 - Build CRS using <new_labels>
+	vector<int> xadj(vertices.size() + 1), adj(2 * edgeCounter), values(2 * edgeCounter);
+	xadj[0] = 0;
+	int vertexCounter = 0;
+	for (vector<int>::iterator it = new_labels.begin(); it != new_labels.end(); it++) {
+		int lower_bound = xadj[vertexCounter];
+		int upper_bound = vertices[*it].edges.size() + lower_bound;
+		xadj[++vertexCounter] = upper_bound;
+		unordered_map<int, int>::iterator edge = vertices[*it].edges.begin();
+		for (int i = lower_bound; i < upper_bound; i++, edge++) {
+			adj[i] = vertices[edge->first].label;
+			values[i] = edge->second;
+		}
+	}
+	os << "Output Format" << endl
+		<< "<# of elements in xadj> <# of elements in adj and values>" << endl
+		<< "<xadj_1> <xadj_2> ... <xadj_n>" << endl
+		<< "<adj_1> <adj_2> ... <adj_m>" << endl
+		<< "<values_1> <values_2> ... <values_m>" << endl
+		<< "--------------------------------------------" << endl
+		<< xadj.size() << " " << adj.size() << " " << values.size() << endl;
+	processOutput(xadj, os);
+	processOutput(adj, os);
+	processOutput(values, os);
+	cout << "CRS formatted graph has been written to file" << endl;
 }
 
 // Class Ordering | Private Member Function Definitions
@@ -67,7 +117,7 @@ void Ordering::mergeVertices(int u, int v) {
 
 	unordered_map<int, int> & u_edges = vertices[u].edges, &v_edges = vertices[v].edges;
 	// 2 - Reconnect edges connected to <u>, to <v'>
-	for (unordered_map<int, int>::iterator it = u_edges.begin(); it != u_edges.end(); it++) { // iterate over edges of <u>
+	for (unordered_map<int, int>::iterator it = u_edges.begin(); it != u_edges.end(); it++) {
 		int neighbor_id = it->first;
 		if (neighbor_id == v || neighbor_id == u) {
 			continue;
@@ -103,13 +153,24 @@ void Ordering::mergeVertices(int u, int v) {
 	u_edges.clear();
 	v_edges.erase(v_u_edge);
 	vertices[u].merged = true;
-	// IMPORTANT NOTE: The code assumes the degree of <v> doesn't change (it counts the loop)
 }
 
 void Ordering::community_detection() {
 	// Sort the array of vertices with respect to increasing order of degree
 	vector<Vertex> sortedVertices = vertices;
-	sort(sortedVertices.begin(), sortedVertices.end());
+	sort(sortedVertices.begin(), sortedVertices.end()); // keeps the vertices sorted in increasing order of degree
+
+	vector<Vertex> originalArray = vertices; // we'll modify the <vertices> array by performing merge operations,
+	// we'll use <originalArray> to revert back to the original array we had
+
+	// 1 - Set all the edge weights to 1
+	for (int i = 0; i < vertices.size(); i++) {
+		unordered_map<int, int> & edges = vertices[i].edges;
+		for (unordered_map<int, int>::iterator it = edges.begin(); it != edges.end(); it++) {
+			it->second = 1;
+		}
+	}
+	
 
 	// 2 - Iterate vertices in increasing order of degree
 	for (vector<Vertex>::const_iterator iter = sortedVertices.begin(); iter != sortedVertices.end(); iter++) {
@@ -137,6 +198,9 @@ void Ordering::community_detection() {
 			dendrogram.connect(currentVertex.label, previousLabel);
 		}
 	}
+
+	// We've modified the <vertices> array, revert it back to it's original state
+	vertices = originalArray;
 }
 
 const vector<int> Ordering::ordering_generation() {
@@ -160,4 +224,11 @@ double Ordering::modularity(int u, int v) {
 
 	double modularity = (((double)edge->second / (2.0 * m)) - (weighted_degree_u * weighted_degree_v / ((2.0 * m) * (2.0 * m))));
 	return modularity;
+}
+
+void Ordering::processOutput(const vector<int> & data, ofstream & os) {
+	for (vector<int>::const_iterator it = data.begin(); it != data.end(); it++) {
+		os << *it << " ";
+	}
+	os << endl;
 }

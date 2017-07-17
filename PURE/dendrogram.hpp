@@ -7,6 +7,7 @@
 
 class Dendrogram {
 public:
+	Dendrogram();
 	Dendrogram(int nodeCount);
 	~Dendrogram();
 

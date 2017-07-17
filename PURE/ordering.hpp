@@ -4,16 +4,28 @@
 #include <vector>
 #include <exception>
 #include <unordered_map>
+#include <fstream>
 #include "dendrogram.hpp"
+
+struct LabelPosition {
+	LabelPosition (int label, int position) 
+		: label(label), position(position) { }
+	int label;
+	int position;
+
+	bool operator < (const LabelPosition & rhs) {
+		return this->label < rhs.label;
+	}
+};
 
 class Ordering {
 public:
-	// TODO: make another constructor for graph input in CRS format
 	Ordering(int vertexCount);
+	Ordering(std::ifstream & is); // Reads Matlab graph format
 	~Ordering();
 
-	void insertEdge(int from, int to);
-	void rabbitOrder();
+	void insertEdge(int from, int to, int value);
+	void rabbitOrder(std::ofstream & os); // returns the relabled graph in CRS format
 private:
 	struct Edge {
 		Edge(int dest) : weight(1), dest(dest) { }
@@ -28,12 +40,17 @@ private:
 
 		int label;
 
-		bool operator < (const Vertex & rhs) {
+		bool operator < (const Vertex & rhs) const {
 			return this->edges.size() < rhs.edges.size();
 		}
 
 		static int labelCounter; // will be used to give out labels
 		bool merged;
+	};
+	struct VertexPtrComparator { // Utility struct for vertex comparison used in Ordering::rabbitOrder()
+		bool operator() (const std::vector<Vertex>::const_iterator lhs, const std::vector<Vertex>::const_iterator rhs) const {
+			return lhs->label > rhs->label;
+		}
 	};
 
 	void mergeVertices(int u, int v);
@@ -44,7 +61,10 @@ private:
 	int new_id;
 	unsigned int edgeCounter;
 
+	void processOutput(const std::vector<int> & data, std::ofstream & os);
+
 	std::vector<Vertex> vertices;
+	std::vector<int> new_labels;
 	Dendrogram dendrogram;
 };
 

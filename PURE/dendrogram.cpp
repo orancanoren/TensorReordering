@@ -6,8 +6,6 @@
 #include <stack>
 using namespace std;
 
-#define _DEBUG_HIGH
-
 Dendrogram::Dendrogram(int nodeCount) : nodeCount(nodeCount) {
 #ifdef _DEBUG_HIGH
 	cout << "Dendrogram constructor invoked" << endl;
@@ -15,6 +13,14 @@ Dendrogram::Dendrogram(int nodeCount) : nodeCount(nodeCount) {
 	for (int i = 0; i < nodeCount; i++) {
 		vertices.push_back(Vertex(i));
 	}
+	new_id = nodeCount;
+}
+
+Dendrogram::Dendrogram() {
+	// Creates an empty dendrogram with no vertices [should be used for initializing only!]
+#ifdef _DEBUG_HIGH
+	cout << "Dendrogram constructor invoked" << endl;
+#endif
 	new_id = nodeCount;
 }
 
@@ -39,7 +45,7 @@ vector<int> Dendrogram::DFS() {
 	}
 
 	// 2 - while the list is not empty, get one community root and perform DFS starting from it
-	vector<int> DFSorder(nodeCount, -1);
+	vector<int> DFSorder(nodeCount);
 	int labelIncrement = 0;
 	while (!communities.empty()) {
 		list<Vertex>::iterator current_community = communities.top();
@@ -54,7 +60,7 @@ vector<int> Dendrogram::DFS() {
 
 			// If current vertex is a leaf, relabel the vertex
 			if (!current_top->hasChildren) { // if edge1 is empty, edge2 must be empty as well
-				DFSorder[current_top->label] = labelIncrement++; // assign new label
+				DFSorder[labelIncrement++] = current_top->label; // assign new label
 				DFSstack.pop();
 			}
 			else if (!current_top->edge1->visited) {
