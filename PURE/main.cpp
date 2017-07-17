@@ -6,7 +6,7 @@
 using namespace std;
 
 int main() {
-	
+	/*
 	Ordering graph(8);
 	graph.insertEdge(0, 2, 1.4);
 	graph.insertEdge(0, 4, 5.1);
@@ -20,15 +20,15 @@ int main() {
 	graph.insertEdge(2, 7, 9.2);
 	graph.insertEdge(4, 7, 7.9);
 	graph.insertEdge(6, 3, 3.1);
-	/*
-	const string filename = "bcsstm19.mtx";
+	*/
+	const string filename = "sample_graph.txt";
 	ifstream is(filename);
 	if (!is.is_open()) {
 		cout << "Unable to open file " << filename << endl
 			<< "Terminating" << endl;
 		exit(1);
 	}
-	Ordering graph(is);*/
+	Ordering graph(is);
 
 	ofstream os("output.txt");
 	graph.rabbitOrder(os);

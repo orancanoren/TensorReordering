@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <fstream>
 #include <queue>
+#include <limits.h>
+
+#define __STDC_LIMIT_MACOS
 
 using namespace std;
 
@@ -18,7 +21,7 @@ Ordering::Ordering(int vertexCount) : dendrogram(vertexCount){
 #ifdef _DEBUG_HIGH
 	cout << "Ordering constructor invoked" << endl;
 #endif
-	vertices.resize(vertexCount); // theta(V)
+	vertices.resize(vertexCount);
 	new_id = vertexCount;
 	edgeCounter = 0;
 }
@@ -40,6 +43,8 @@ Ordering::Ordering(ifstream & is) {
 		is >> v1 >> v2 >> weight;
 		insertEdge(v1, v2, weight);
 	}
+	new_id = vertexCount;
+	edgeCounter = edgeCount;
 #ifdef _DEBUG_HIGH
 	cout << "Graph has been read successfully" << endl;
 #endif
