@@ -216,7 +216,6 @@ void Ordering::community_detection() {
 		}
 	}
 	
-
 	// 2 - Iterate vertices in increasing order of degree
 	for (vector<Vertex>::const_iterator iter = sortedVertices.begin(); iter != sortedVertices.end(); iter++) {
 		Vertex & currentVertex = vertices[iter->label];

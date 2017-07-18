@@ -7,17 +7,6 @@
 #include <fstream>
 #include "dendrogram.hpp"
 
-struct LabelPosition {
-	LabelPosition (int label, int position) 
-		: label(label), position(position) { }
-	int label;
-	int position;
-
-	bool operator < (const LabelPosition & rhs) {
-		return this->label < rhs.label;
-	}
-};
-
 class Ordering {
 public:
 	Ordering(int vertexCount, bool symmetric = true);
