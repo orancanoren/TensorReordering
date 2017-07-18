@@ -27,7 +27,7 @@ Ordering::Ordering(int vertexCount, bool symmetric) : dendrogram(vertexCount), s
 	edgeInserted = false;
 }
 
-Ordering::Ordering(ifstream & is, bool symmetric) : symmetric(symmetric)  {
+Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist) : symmetric(symmetric), valuesExist(valuesExist)  {
 	// Input Format:
 	// * First line: <vertex count> <vertex count> <edge count>
 #ifdef _DEBUG_HIGH
@@ -40,12 +40,18 @@ Ordering::Ordering(ifstream & is, bool symmetric) : symmetric(symmetric)  {
 	dendrogram = Dendrogram(vertexCount);
 
 	for (int i = 0; i < edgeCount; i++) {
-		int v1, v2, weight;
-		is >> v1 >> v2 >> weight;
-		if (cin.fail()) {
-			throw InputErrorException();
+		if (valuesExist) {
+			int v1, v2, weight;
+			is >> v1 >> v2 >> weight;
+			if (cin.fail()) {
+				throw InputErrorException();
+			}
 		}
-		insertEdge(v1, v2, weight);
+		else {
+			int v1, v2;
+			is >> v1 >> v2;
+			insertEdge(v1, v2);
+		}
 	}
 	new_id = vertexCount;
 	edgeCounter = edgeCount;
@@ -99,7 +105,10 @@ void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & l
 	}
 
 	// 1 - Build CRS using <new_labels>
-	vector<int> xadj(vertices.size() + 1), adj(2 * edgeCounter), values(2 * edgeCounter);
+	vector<int> xadj(vertices.size() + 1), adj(2 * edgeCounter), values;
+	if (valuesExist) {
+		values.resize(2 * edgeCounter);
+	}
 	xadj[0] = 0;
 	int vertexCounter = 0;
 	for (vector<int>::iterator it = new_labels.begin(); it != new_labels.end(); it++) {
@@ -109,11 +118,13 @@ void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & l
 		unordered_map<int, int>::iterator edge = vertices[*it].edges.begin();
 		for (int i = lower_bound; i < upper_bound; i++, edge++) {
 			adj[i] = vertices[edge->first].label;
-			values[i] = edge->second;
+			if (valuesExist) {
+				values[i] = edge->second;
+			}
 		}
 	}
 	os << "Output Format" << endl
-		<< "<# of elements in xadj> <# of elements in adj and values>" << endl
+		<< "<# of elements in xadj> <# of elements in adj> <# of element in values>" << endl
 		<< "<xadj_1> <xadj_2> ... <xadj_n>" << endl
 		<< "<adj_1> <adj_2> ... <adj_m>" << endl
 		<< "<values_1> <values_2> ... <values_m>" << endl
@@ -121,7 +132,9 @@ void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & l
 		<< xadj.size() << " " << adj.size() << " " << values.size() << endl;
 	processOutput(xadj, os);
 	processOutput(adj, os);
-	processOutput(values, os);
+	if (valuesExist) {
+		processOutput(values, os);
+	}
 	cout << "CSR formatted graph has been written to file" << endl;
 
 	// Mark: Matlab compatible file output
@@ -131,7 +144,11 @@ void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & l
 	matlab_stream << xadj_size << " " << xadj_size << " " << adj_size << endl;
 	for (int i = 0; i < xadj_size - 1; i++) {
 		for (int j = xadj[i]; j < xadj[i + 1]; j++) {
-			matlab_stream << i << " " << adj[j] << " " << values[j] << endl;
+			matlab_stream << i << " " << adj[j];
+			if (valuesExist) {
+				matlab_stream << " " << values[j];
+			}
+			matlab_stream << endl;
 		}
 	}
 	cout << "MatrixMarket compatible matrix has been written to file" << endl;

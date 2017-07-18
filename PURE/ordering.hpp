@@ -10,10 +10,10 @@
 class Ordering {
 public:
 	Ordering(int vertexCount, bool symmetric = true);
-	Ordering(std::ifstream & is, bool symmetric = true); // Reads Matlab graph format
+	Ordering(std::ifstream & is, bool symmetric = true, bool valuesExist = true); // Reads Matlab graph format
 	~Ordering();
 
-	void insertEdge(int from, int to, int value);
+	void insertEdge(int from, int to, int value = 0);
 	void rabbitOrder(std::ofstream & os, std::ofstream & matlab_stream, std::ofstream & label_stream); // returns the relabled graph in CRS format
 private:
 	struct Edge {
@@ -51,6 +51,7 @@ private:
 	unsigned int edgeCounter;
 	bool symmetric;
 	bool edgeInserted;
+	bool valuesExist;
 
 	void processOutput(const std::vector<int> & data, std::ofstream & os);
 
