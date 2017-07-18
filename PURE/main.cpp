@@ -20,7 +20,7 @@ int main() {
 	}
 	catch (GraphException & exc) {
 		cout << "Error occured:" << endl;
-		exc.what();
+		cout << exc.what() << endl;
 		cout << "Terminating" << endl;
 	}
 

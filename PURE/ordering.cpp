@@ -105,10 +105,7 @@ void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & l
 	}
 
 	// 1 - Build CRS using <new_labels>
-	vector<int> xadj(vertices.size() + 1), adj(2 * edgeCounter), values;
-	if (valuesExist) {
-		values.resize(2 * edgeCounter);
-	}
+	vector<int> xadj(vertices.size() + 1), adj(2 * edgeCounter), values(2 * edgeCounter);
 	xadj[0] = 0;
 	int vertexCounter = 0;
 	for (vector<int>::iterator it = new_labels.begin(); it != new_labels.end(); it++) {
@@ -118,9 +115,7 @@ void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & l
 		unordered_map<int, int>::iterator edge = vertices[*it].edges.begin();
 		for (int i = lower_bound; i < upper_bound; i++, edge++) {
 			adj[i] = vertices[edge->first].label;
-			if (valuesExist) {
-				values[i] = edge->second;
-			}
+			values[i] = edge->second;
 		}
 	}
 	os << "Output Format" << endl
@@ -132,9 +127,7 @@ void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & l
 		<< xadj.size() << " " << adj.size() << " " << values.size() << endl;
 	processOutput(xadj, os);
 	processOutput(adj, os);
-	if (valuesExist) {
-		processOutput(values, os);
-	}
+	processOutput(values, os);
 	cout << "CSR formatted graph has been written to file" << endl;
 
 	// Mark: Matlab compatible file output
@@ -145,9 +138,7 @@ void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & l
 	for (int i = 0; i < xadj_size - 1; i++) {
 		for (int j = xadj[i]; j < xadj[i + 1]; j++) {
 			matlab_stream << i << " " << adj[j];
-			if (valuesExist) {
-				matlab_stream << " " << values[j];
-			}
+			matlab_stream << " " << values[j];
 			matlab_stream << endl;
 		}
 	}
