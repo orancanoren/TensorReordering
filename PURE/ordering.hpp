@@ -20,12 +20,12 @@ struct LabelPosition {
 
 class Ordering {
 public:
-	Ordering(int vertexCount);
-	Ordering(std::ifstream & is); // Reads Matlab graph format
+	Ordering(int vertexCount, bool symmetric = true);
+	Ordering(std::ifstream & is, bool symmetric = true); // Reads Matlab graph format
 	~Ordering();
 
 	void insertEdge(int from, int to, int value);
-	void rabbitOrder(std::ofstream & os); // returns the relabled graph in CRS format
+	void rabbitOrder(std::ofstream & os, std::ofstream & matlab_stream, std::ofstream & label_stream); // returns the relabled graph in CRS format
 private:
 	struct Edge {
 		Edge(int dest) : weight(1), dest(dest) { }
@@ -60,6 +60,8 @@ private:
 	double modularity(int u, int v);
 	int new_id;
 	unsigned int edgeCounter;
+	bool symmetric;
+	bool edgeInserted;
 
 	void processOutput(const std::vector<int> & data, std::ofstream & os);
 
@@ -74,7 +76,8 @@ private:
 
 enum ExceptionType {
 	UNKNOWN_EXCEPTION = 0, // shouldn't be thrown
-	NOT_FOUND
+	NOT_FOUND,
+	INPUT_ERROR
 };
 
 class GraphException : public std::exception {
@@ -98,12 +101,20 @@ enum Reason {
 	EDGE_NOT_FOUND
 };
 
-class NotFound : public GraphException {
+class NotFoundException : public GraphException {
 public:
-	NotFound(Reason reason) {
+	NotFoundException(Reason reason) {
 		excType = NOT_FOUND;
 		if (reason == VERTEX_NOT_FOUND) msg = "VERTEX NOT FOUND";
 		else msg = "EDGE NOT FOUND";
+	}
+};
+
+class InputErrorException : public GraphException {
+public:
+	InputErrorException() {
+		excType = INPUT_ERROR;
+		msg = "Failure during input processing";
 	}
 };
 

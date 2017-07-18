@@ -1,0 +1,10 @@
+Output Format
+<# of elements in xadj> <# of elements in adj and values>
+<xadj_1> <xadj_2> ... <xadj_n>
+<adj_1> <adj_2> ... <adj_m>
+<values_1> <values_2> ... <values_m>
+--------------------------------------------
+9 24 24
+0 1 5 8 11 16 18 21 24 
+1 2 3 4 0 3 4 1 2 4 1 2 3 6 7 1 6 7 5 4 7 5 6 4 
+0 2 9 7 0 1 5 2 1 8 9 5 8 0 1 7 8 4 8 0 3 4 3 1 

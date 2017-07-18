@@ -17,16 +17,17 @@ using namespace std;
 
 int Ordering::Vertex::labelCounter = 0;
 
-Ordering::Ordering(int vertexCount) : dendrogram(vertexCount){
+Ordering::Ordering(int vertexCount, bool symmetric) : dendrogram(vertexCount), symmetric(symmetric) {
 #ifdef _DEBUG_HIGH
 	cout << "Ordering constructor invoked" << endl;
 #endif
 	vertices.resize(vertexCount);
 	new_id = vertexCount;
 	edgeCounter = 0;
+	edgeInserted = false;
 }
 
-Ordering::Ordering(ifstream & is) {
+Ordering::Ordering(ifstream & is, bool symmetric) : symmetric(symmetric)  {
 	// Input Format:
 	// * First line: <vertex count> <vertex count> <edge count>
 #ifdef _DEBUG_HIGH
@@ -41,10 +42,16 @@ Ordering::Ordering(ifstream & is) {
 	for (int i = 0; i < edgeCount; i++) {
 		int v1, v2, weight;
 		is >> v1 >> v2 >> weight;
+		if (cin.fail()) {
+			throw InputErrorException();
+		}
 		insertEdge(v1, v2, weight);
 	}
 	new_id = vertexCount;
 	edgeCounter = edgeCount;
+	if (symmetric) {
+		edgeCounter /= 2;
+	}
 #ifdef _DEBUG_HIGH
 	cout << "Graph has been read successfully" << endl;
 #endif
@@ -62,14 +69,26 @@ void Ordering::insertEdge(int from, int to, int value) {
 #ifdef _DEBUG_HIGH
 	cout << "Ordering::insertEdge() invoked" << endl;
 #endif
-	if (from >= vertices.size() || from < 0) throw NotFound(VERTEX_NOT_FOUND);
+	if (from >= vertices.size() || from < 0) throw NotFoundException(VERTEX_NOT_FOUND);
 
 	vertices[from].edges.insert({ to, value });
-	vertices[to].edges.insert({ from, value });
-	edgeCounter++;
+	if (!symmetric) {
+		vertices[to].edges.insert({ from, value });
+	}
+	if (symmetric) {
+		if (edgeInserted) {
+			edgeInserted = false;
+		}
+		else {
+			edgeCounter++;
+		}
+	}
+	else {
+		edgeCounter++;
+	}
 }
 
-void Ordering::rabbitOrder(ofstream & os) { // UNFINISHED!!!
+void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & label_stream) {
 	// 0 - Calculate the new labels
 	community_detection();
 	new_labels = ordering_generation();
@@ -103,7 +122,28 @@ void Ordering::rabbitOrder(ofstream & os) { // UNFINISHED!!!
 	processOutput(xadj, os);
 	processOutput(adj, os);
 	processOutput(values, os);
-	cout << "CRS formatted graph has been written to file" << endl;
+	cout << "CSR formatted graph has been written to file" << endl;
+
+	// Mark: Matlab compatible file output
+	if (!matlab_stream.is_open()) return;
+
+	const int xadj_size = xadj.size(), adj_size = adj.size(), val_size = values.size();
+	matlab_stream << xadj_size << " " << xadj_size << " " << adj_size << endl;
+	for (int i = 0; i < xadj_size - 1; i++) {
+		for (int j = xadj[i]; j < xadj[i + 1]; j++) {
+			matlab_stream << i << " " << adj[j] << " " << values[j] << endl;
+		}
+	}
+	cout << "MatrixMarket compatible matrix has been written to file" << endl;
+
+	if (!label_stream.is_open()) return;
+
+	label_stream << "Output Format" << endl
+		<< "<old label> <new label>" << endl;
+	for (vector<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++) {
+		label_stream << *it << " " << it - new_labels.begin() << endl;
+	}
+	cout << "Relabeling file has been created" << endl;
 }
 
 // Class Ordering | Private Member Function Definitions
