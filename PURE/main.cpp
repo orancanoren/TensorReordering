@@ -15,10 +15,10 @@ int main(int argc, char * argv[]) {
 		cout << "Please eneter the filename as a CL argument" << endl;
 		exit(1);
 	}
-	if (argc > 2 && argv[2] == "-not_symmetric") {
+	if (argc > 2 && argv[2] == "not_symmetric") {
 		is_symmetric = false;
 	}
-	if (argc > 3 && argv[3] == "-no_values") {
+	if (argc > 3 && argv[3] == "no_values") {
 		values_exist = false;
 	}
 
@@ -29,7 +29,7 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 	try {
-		Ordering graph(is);
+		Ordering graph(is, is_symmetric, values_exist);
 		ofstream os("permutation.txt");
 		graph.rabbitOrder(os);
 	}
@@ -38,6 +38,5 @@ int main(int argc, char * argv[]) {
 		cout << exc.what() << endl;
 		cout << "Terminating" << endl;
 	}
-
 	return 0;
 }
