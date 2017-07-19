@@ -8,6 +8,7 @@
 #include <fstream>
 #include <queue>
 #include <limits.h>
+#include <chrono>
 
 #define __STDC_LIMIT_MACOS
 
@@ -30,9 +31,12 @@ Ordering::Ordering(int vertexCount, bool symmetric) : dendrogram(vertexCount), s
 Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist) : symmetric(symmetric), valuesExist(valuesExist)  {
 	// Input Format:
 	// * First line: <vertex count> <vertex count> <edge count>
+	// <vertex id> <vertex id> <weight>
 #ifdef _DEBUG_HIGH
 	cout << "Ordering constructor invoked" << endl;
 #endif
+	cout << "Started taking inputs from stream" << endl;
+	auto begin = chrono::high_resolution_clock::now();
 	unsigned int vertexCount, edgeCount;
 	is >> vertexCount >> vertexCount >> edgeCount;
 	vertices.resize(vertexCount);
@@ -58,6 +62,9 @@ Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist) : symmetric(
 	if (symmetric) {
 		edgeCounter /= 2;
 	}
+	auto end = chrono::high_resolution_clock::now();
+	cout << "Input has been processed in " << 
+		chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 #ifdef _DEBUG_HIGH
 	cout << "Graph has been read successfully" << endl;
 #endif
@@ -94,64 +101,24 @@ void Ordering::insertEdge(int from, int to, int value) {
 	}
 }
 
-void Ordering::rabbitOrder(ofstream & os, ofstream & matlab_stream, ofstream & label_stream) {
+void Ordering::rabbitOrder(ofstream & os) {
 	// 0 - Calculate the new labels
+	auto begin = chrono::high_resolution_clock::now();
 	community_detection();
+	auto end = chrono::high_resolution_clock::now();
+	cout << "Community Detection has been completed in "
+		<< chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
+
+	begin = chrono::high_resolution_clock::now();
 	new_labels = ordering_generation();
+	end = chrono::high_resolution_clock::now();
+	cout << "Ordering Generation has been completed in "
+		<< chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 
-	// 1 - relabel the vertices
-	for (vector<int>::iterator new_label = new_labels.begin(); new_label != new_labels.end(); new_label++) {
-		vertices[*new_label].label = new_label - new_labels.begin();
-	}
-
-	// 1 - Build CRS using <new_labels>
-	vector<int> xadj(vertices.size() + 1), adj(2 * edgeCounter), values(2 * edgeCounter);
-	xadj[0] = 0;
-	int vertexCounter = 0;
-	for (vector<int>::iterator it = new_labels.begin(); it != new_labels.end(); it++) {
-		int lower_bound = xadj[vertexCounter];
-		int upper_bound = vertices[*it].edges.size() + lower_bound;
-		xadj[++vertexCounter] = upper_bound;
-		unordered_map<int, int>::iterator edge = vertices[*it].edges.begin();
-		for (int i = lower_bound; i < upper_bound; i++, edge++) {
-			adj[i] = vertices[edge->first].label;
-			values[i] = edge->second;
-		}
-	}
-	os << "Output Format" << endl
-		<< "<# of elements in xadj> <# of elements in adj> <# of element in values>" << endl
-		<< "<xadj_1> <xadj_2> ... <xadj_n>" << endl
-		<< "<adj_1> <adj_2> ... <adj_m>" << endl
-		<< "<values_1> <values_2> ... <values_m>" << endl
-		<< "--------------------------------------------" << endl
-		<< xadj.size() << " " << adj.size() << " " << values.size() << endl;
-	processOutput(xadj, os);
-	processOutput(adj, os);
-	processOutput(values, os);
-	cout << "CSR formatted graph has been written to file" << endl;
-
-	// Mark: Matlab compatible file output
-	if (!matlab_stream.is_open()) return;
-
-	const int xadj_size = xadj.size(), adj_size = adj.size(), val_size = values.size();
-	matlab_stream << xadj_size << " " << xadj_size << " " << adj_size << endl;
-	for (int i = 0; i < xadj_size - 1; i++) {
-		for (int j = xadj[i]; j < xadj[i + 1]; j++) {
-			matlab_stream << i << " " << adj[j];
-			matlab_stream << " " << values[j];
-			matlab_stream << endl;
-		}
-	}
-	cout << "MatrixMarket compatible matrix has been written to file" << endl;
-
-	if (!label_stream.is_open()) return;
-
-	label_stream << "Output Format" << endl
-		<< "<old label> <new label>" << endl;
 	for (vector<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++) {
-		label_stream << *it << " " << it - new_labels.begin() << endl;
+		os << *it << " " << it - new_labels.begin() << endl;
 	}
-	cout << "Relabeling file has been created" << endl;
+	cout << "New permutations has been saved to file" << endl;
 }
 
 // Class Ordering | Private Member Function Definitions

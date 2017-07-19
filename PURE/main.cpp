@@ -15,8 +15,8 @@ int main() {
 	}
 	try {
 		Ordering graph(is);
-		ofstream os("CSR_output.txt"), matlab("matrix_output.txt"), new_labels("labels.txt");
-		graph.rabbitOrder(os, matlab, new_labels);
+		ofstream os("permutation.txt");
+		graph.rabbitOrder(os);
 	}
 	catch (GraphException & exc) {
 		cout << "Error occured:" << endl;

@@ -10,35 +10,27 @@
 class Ordering {
 public:
 	Ordering(int vertexCount, bool symmetric = true);
-	Ordering(std::ifstream & is, bool symmetric = true, bool valuesExist = true); // Reads Matlab graph format
+	Ordering(std::ifstream & is, bool symmetric = true, bool valuesExist = true); // Reads MatrixMarket graph
 	~Ordering();
 
 	void insertEdge(int from, int to, int value = 0);
-	void rabbitOrder(std::ofstream & os, std::ofstream & matlab_stream, std::ofstream & label_stream); // returns the relabled graph in CRS format
+	void rabbitOrder(std::ofstream & os);
 private:
 	struct Edge {
 		Edge(int dest) : weight(1), dest(dest) { }
 		double weight;
-		int dest; // destination
+		int dest;
 	};
 	struct Vertex {
 		Vertex() : label(labelCounter++), merged(false) { }
 		// keep a hashtable of edges
-		std::unordered_map<int, int> edges; // undirected edges
-		// degree of a vertex is kept in the unordered_map above by its size
-
+		std::unordered_map<int, int> edges;
 		int label;
+		static int labelCounter; // will be used to give out labels
+		bool merged;
 
 		bool operator < (const Vertex & rhs) const {
 			return this->edges.size() < rhs.edges.size();
-		}
-
-		static int labelCounter; // will be used to give out labels
-		bool merged;
-	};
-	struct VertexPtrComparator { // Utility struct for vertex comparison used in Ordering::rabbitOrder()
-		bool operator() (const std::vector<Vertex>::const_iterator lhs, const std::vector<Vertex>::const_iterator rhs) const {
-			return lhs->label > rhs->label;
 		}
 	};
 
@@ -47,6 +39,7 @@ private:
 
 	const std::vector<int> ordering_generation();
 	double modularity(int u, int v);
+
 	int new_id;
 	unsigned int edgeCounter;
 	bool symmetric;
