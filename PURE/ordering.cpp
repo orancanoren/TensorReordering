@@ -47,6 +47,7 @@ Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist) : symmetric(
 		if (valuesExist) {
 			int v1, v2, weight;
 			is >> v1 >> v2 >> weight;
+			insertEdge(v1, v2);
 			if (cin.fail()) {
 				throw InputErrorException();
 			}
