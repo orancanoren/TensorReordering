@@ -28,7 +28,7 @@ Ordering::Ordering(int vertexCount, bool symmetric) : dendrogram(vertexCount), s
 	edgeInserted = false;
 }
 
-Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist) : symmetric(symmetric), valuesExist(valuesExist)  {
+Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist, bool zeroBased) : symmetric(symmetric), valuesExist(valuesExist)  {
 	// Input Format:
 	// * First line: <vertex count> <vertex count> <edge count>
 	// <vertex id> <vertex id> <weight>
@@ -47,6 +47,10 @@ Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist) : symmetric(
 		if (valuesExist) {
 			int v1, v2, weight;
 			is >> v1 >> v2 >> weight;
+			if (!zeroBased) {
+				v1 -= 1;
+				v2 -= 1;
+			}
 			insertEdge(v1, v2);
 			if (cin.fail()) {
 				throw InputErrorException();
@@ -55,6 +59,10 @@ Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist) : symmetric(
 		else {
 			int v1, v2;
 			is >> v1 >> v2;
+			if (!zeroBased) {
+				v1 -= 1;
+				v2 -= 1;
+			}
 			insertEdge(v1, v2);
 		}
 	}
