@@ -18,6 +18,13 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="RCM\main.cpp" />
+    <ClCompile Include="RCM\rcm.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="RCM\rcm.hpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -141,15 +148,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="dendrogram.hpp" />
-    <ClInclude Include="ordering.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="dendrogram.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="ordering.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
