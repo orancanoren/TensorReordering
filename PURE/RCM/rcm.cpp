@@ -9,11 +9,43 @@
 
 using namespace std;
 
-RCM::RCM(int nodeCount, bool valuesExist, bool symmetric) 
-	: valuesExist(valuesExist), symmetric(symmetric) {
+RCM::RCM(int nodeCount, bool valuesExist, bool symmetric, bool oneBased)
+	: valuesExist(valuesExist), symmetric(symmetric), oneBased(oneBased) {
 	vertices.resize(nodeCount);
 	for (int i = 0; i < nodeCount; i++) {
 		unmarkedVertices.insert(i);
+	}
+}
+
+RCM::RCM(ifstream & is, bool valuesExist, bool symmetric, bool oneBased) 
+	: valuesExist(valuesExist), symmetric(symmetric), oneBased(oneBased) {
+	// MatrixMarket input format expected [without comments]
+	if (!is.is_open()) {
+
+	}
+
+	int vertexCount, edgeCount;
+	is >> vertexCount >> edgeCount;
+	for (int i = 0; i < vertexCount; i++) {
+		int v1, v2, weight;
+		if (valuesExist) {
+			is >> v1 >> v2 >> weight;
+		}
+		else {
+			is >> v1 >> v2;
+		}
+		
+		// Input check
+		int lowerBound = oneBased ? 1 : 0;
+		int upperBound = oneBased ? vertexCount : vertexCount - 1;
+
+		if (v1 < lowerBound || v1 > upperBound || v2 < lowerBound || v2 > upperBound) 
+			throw InvalidInputException();
+
+		insertEdge(v1, v2);
+		if (symmetric) {
+			insertEdge(v2, v1);
+		}
 	}
 }
 
