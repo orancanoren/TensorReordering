@@ -7,23 +7,45 @@
 #include <vector>
 using namespace std;
 
+void banner() {
+	cout
+		<< "      ___           ___           ___     " << endl
+		<< "     /\\  \\         /\\  \\         /\\__\\    " << endl
+		<< "    /::\\  \\       /::\\  \\       /::|  |   " << endl
+		<< "   /:/\\:\\  \\     /:/\\:\\  \\     /:|:|  |   " << endl
+		<< "  /::\\~\\:\\  \\   /:/  \\:\\  \\   /:/|:|__|__ " << endl
+		<< " /:/\\:\\ \\:\\__\\ /:/__/ \\:\\__\\ /:/ |::::\\__\\ " << endl
+		<< " \\/_|::\\/:/  / \\:\\  \\  \\/__/ \\/__/~~/:/  /" << endl
+		<< "    |:|::/  /   \\:\\  \\             /:/  / " << endl
+		<< "    |:|\\/__/     \\:\\  \\           /:/  /  " << endl
+		<< "    |:|  |        \\:\\__\\         /:/  /   " << endl
+		<< "     \\|__|         \\/__/         \\/__/    " << endl;
+
+}
+
 int main(int argc, char * argv[]) {
 	// Parse command line arguments
 	vector<string> arguments(argc);
 	for (int i = 0; i < argc; i++) {
 		arguments[i] = string(argv[i]);
 	}
-	
+
 	bool valuesExist = false, symmetric = true, oneBased = true;
 
-	if (find(begin(arguments), end(arguments), "-values_exist") != end(arguments)) 
+	if (find(begin(arguments), end(arguments), "-values_exist") != end(arguments)) {
 		valuesExist = true;
+		cout << "Values exist in the data" << endl;
+	}
 
-	if (find(begin(arguments), end(arguments), "-not_symmetric") != end(arguments))
+	if (find(begin(arguments), end(arguments), "-not_symmetric") != end(arguments)) {
 		symmetric = false;
+		cout << "Asymmetrical input processing" << endl;
+	}
 
-	if (find(begin(arguments), end(arguments), "-zero_based") != end(arguments))
+	if (find(begin(arguments), end(arguments), "-zero_based") != end(arguments)) {
 		oneBased = false;
+		cout << "Zero based input processing" << endl;
+	}
 
 	if (find(begin(arguments), end(arguments), "-help") != end(arguments)) {
 		cout << "PURE <file name> -[options]" << endl
@@ -47,9 +69,9 @@ int main(int argc, char * argv[]) {
 			}
 
 			ofstream os("permutation.txt");
-			ifstream is;
-			is.open(filename);
-
+			ifstream is(filename);
+			
+			banner();
 			RCM graph(is, valuesExist, symmetric, oneBased);
 			graph.relabel();
 			graph.printNewLabels(os);
