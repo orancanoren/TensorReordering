@@ -125,7 +125,7 @@ void Ordering::rabbitOrder(ofstream & os) {
 		<< chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 
 	for (vector<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++) {
-		os << *it << " " << it - new_labels.begin() << endl;
+	  os << *it << endl;
 	}
 	cout << "New permutations has been saved to file" << endl;
 }
