@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RCM\main.cpp">
+    <ClCompile Include="RCM\rcm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RCM\rcm.cpp">
+    <ClCompile Include="RCM\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

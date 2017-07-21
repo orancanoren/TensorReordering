@@ -58,14 +58,14 @@ private:
 
 class InputFileErrorException : public RCMexception {
 public:
-	InputFileErrorException() : RCMexception("Error related to input file stream") { }
+	InputFileErrorException(char * msg = "Cannot read the input file") 
+		: RCMexception(msg) { }
 };
 
-class InvalidInputException : public RCMexception {
+class InvalidInputException : public InputFileErrorException {
 public:
-	InvalidInputException() : RCMexception("Error during input parse") {}
+	InvalidInputException() : InputFileErrorException("Error during input parse") {}
 };
 
-class 
 
 #endif

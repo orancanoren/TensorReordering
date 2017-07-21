@@ -20,9 +20,7 @@ RCM::RCM(int nodeCount, bool valuesExist, bool symmetric, bool oneBased)
 RCM::RCM(ifstream & is, bool valuesExist, bool symmetric, bool oneBased) 
 	: valuesExist(valuesExist), symmetric(symmetric), oneBased(oneBased) {
 	// MatrixMarket input format expected [without comments]
-	if (!is.is_open()) {
-
-	}
+	if (!is.is_open()) throw InputFileErrorException();
 
 	int vertexCount, edgeCount;
 	is >> vertexCount >> edgeCount;
