@@ -23,8 +23,9 @@ RCM::RCM(ifstream & is, bool valuesExist, bool symmetric, bool oneBased)
 	if (!is.is_open()) throw InputFileErrorException();
 
 	int vertexCount, edgeCount;
-	is >> vertexCount >> edgeCount;
-	for (int i = 0; i < vertexCount; i++) {
+	is >> vertexCount >> vertexCount >> edgeCount;
+	vertices.resize(vertexCount);
+	for (int i = 0; i < edgeCount; i++) {
 		int v1, v2, weight;
 		if (valuesExist) {
 			is >> v1 >> v2 >> weight;
@@ -45,15 +46,17 @@ RCM::RCM(ifstream & is, bool valuesExist, bool symmetric, bool oneBased)
 			insertEdge(v2, v1);
 		}
 	}
+
+	// Initialize the unvisited vertices set
+	for (int i = 0; i < vertexCount; i++) {
+		unmarkedVertices.insert(i);
+	}
 }
 
 void RCM::insertEdge(int v1, int v2) {
 	// Pre-condition: the new edge doesn't exist
 
 	vertices[v1].neighbors.push_back(v2);
-	if (symmetric) {
-		vertices[v2].neighbors.push_back(v1);
-	}
 }
 
 void RCM::relabel() {
