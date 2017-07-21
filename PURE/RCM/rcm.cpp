@@ -128,9 +128,8 @@ void RCM::printNewLabels(ofstream & os) const {
 	cout << "Preparing the permutation file" << endl;
 	auto begin = chrono::high_resolution_clock::now();
 
-	int iterationCounter = 0;
-	for (list<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++, iterationCounter++) {
-		os << iterationCounter << " -> " << *it << endl;
+	for (list<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++) {
+		os << *it << endl;
 	}
 
 	auto end = chrono::high_resolution_clock::now();
