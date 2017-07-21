@@ -61,7 +61,10 @@ RCM::RCM(ifstream & is, bool valuesExist, bool symmetric, bool oneBased)
 
 void RCM::insertEdge(int v1, int v2) {
 	// Pre-condition: the new edge doesn't exist
-
+	if (oneBased) {
+		v1 -= 1;
+		v2 -= 1;
+	}
 	vertices[v1].neighbors.push_back(v2);
 }
 
