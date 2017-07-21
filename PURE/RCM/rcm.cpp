@@ -6,6 +6,7 @@
 #include <iostream>
 #include <set>
 #include <climits>
+#include <chrono>
 
 using namespace std;
 
@@ -22,6 +23,8 @@ RCM::RCM(ifstream & is, bool valuesExist, bool symmetric, bool oneBased)
 	// MatrixMarket input format expected [without comments]
 	if (!is.is_open()) throw InputFileErrorException();
 
+	cout << "Started taking inputs" << endl;
+	auto begin = chrono::high_resolution_clock::now();
 	int vertexCount, edgeCount;
 	is >> vertexCount >> vertexCount >> edgeCount;
 	vertices.resize(vertexCount);
@@ -46,6 +49,9 @@ RCM::RCM(ifstream & is, bool valuesExist, bool symmetric, bool oneBased)
 			insertEdge(v2, v1);
 		}
 	}
+	
+	auto end = chrono::high_resolution_clock::now();
+	cout << "Input has been processed in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 
 	// Initialize the unvisited vertices set
 	for (int i = 0; i < vertexCount; i++) {
@@ -61,6 +67,9 @@ void RCM::insertEdge(int v1, int v2) {
 
 void RCM::relabel() {
 	// Pre-condition: At least 2 vertices exist in <vertices>
+
+	cout << "Started relabeling vertices" << endl;
+	auto begin = chrono::high_resolution_clock::now();
 
 	while (!unmarkedVertices.empty()) {
 		// 1 - Find the vertex having smallest degree
@@ -91,6 +100,12 @@ void RCM::relabel() {
 			}
 		}
 	}
+
+	auto end = chrono::high_resolution_clock::now();
+	cout << "Vertices has been relabeled in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl
+		<< "Reversing labels" << endl;
+
+	begin = chrono::high_resolution_clock::now();
 	
 	// 3 - Reverse the order of elements
 	list<int>::iterator front = new_labels.begin();
@@ -104,11 +119,20 @@ void RCM::relabel() {
 		front++;
 		back++;
 	}
+
+	end = chrono::high_resolution_clock::now();
+	cout << "Labels have been reversed in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 }
 
 void RCM::printNewLabels(ofstream & os) const {
+	cout << "Preparing the permutation file" << endl;
+	auto begin = chrono::high_resolution_clock::now();
+
 	int iterationCounter = 0;
 	for (list<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++, iterationCounter++) {
 		os << iterationCounter << " -> " << *it << endl;
 	}
+
+	auto end = chrono::high_resolution_clock::now();
+	cout << "Permutation file has been prepared in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 }
