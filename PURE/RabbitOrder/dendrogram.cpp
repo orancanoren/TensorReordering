@@ -32,10 +32,12 @@ Dendrogram::~Dendrogram() {
 
 // Class Dendrogram | Public Member Function Definitions
 
-vector<int> Dendrogram::DFS() {
+vector<int> * Dendrogram::DFS() {
 #ifdef _DEBUG_HIGH
 	cout << "Dendrogram::DFS() invoked" << endl;
 #endif
+	// The returned vector contains the old label for the new label i at position i
+
 	// 1 - keep a list of vertices with no parent (community roots)
 	stack<list<Vertex>::iterator> communities;
 	for (list<Vertex>::iterator iter = vertices.begin(); iter != vertices.end(); iter++) {
@@ -45,7 +47,7 @@ vector<int> Dendrogram::DFS() {
 	}
 
 	// 2 - while the list is not empty, get one community root and perform DFS starting from it
-	vector<int> DFSorder(nodeCount);
+	vector<int> * DFSorder = new vector<int>(nodeCount);
 	int labelIncrement = 0;
 	while (!communities.empty()) {
 		list<Vertex>::iterator current_community = communities.top();
@@ -60,7 +62,7 @@ vector<int> Dendrogram::DFS() {
 
 			// If current vertex is a leaf, relabel the vertex
 			if (!current_top->hasChildren) { // if edge1 is empty, edge2 must be empty as well
-				DFSorder[labelIncrement++] = current_top->label; // assign new label
+				(*DFSorder)[current_top->label] = labelIncrement++; // assign new label
 				DFSstack.pop();
 			}
 			else if (!current_top->edge1->visited) {

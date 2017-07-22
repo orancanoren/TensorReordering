@@ -32,7 +32,7 @@ private:
 	void mergeVertices(int u, int v);
 	void community_detection();
 
-	const std::vector<int> ordering_generation();
+	const std::vector<int> * ordering_generation();
 	double modularity(int u, int v);
 
 	int new_id;

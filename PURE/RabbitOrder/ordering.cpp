@@ -134,7 +134,7 @@ void Ordering::rabbitOrder(ofstream & os) {
 
 	// 2- Ordering Generation
 	begin = chrono::high_resolution_clock::now();
-	new_labels = ordering_generation();
+	new_labels = *ordering_generation(); // memory leak
 	end = chrono::high_resolution_clock::now();
 	cout << "Ordering Generation has been completed in "
 		<< chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
@@ -246,7 +246,7 @@ void Ordering::community_detection() {
 	vertices = originalArray;
 }
 
-const vector<int> Ordering::ordering_generation() {
+const vector<int> * Ordering::ordering_generation() {
 	return dendrogram.DFS();
 }
 

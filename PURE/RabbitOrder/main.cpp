@@ -34,7 +34,7 @@ int main(int argc, char * argv[]) {
 		cout << "PURE <file name> -[options]" << endl
 			<< "----------------------" << endl
 			<< "1. values_exist -> indicates that the input file conatins edge weights" << endl
-			<< "2. not_symmetric -> indicates that for <u>-[e]-><v>, <v>-[e]-><u> doesn't reside in the file" << endl
+			<< "2. not_symmetric -> indicates that for <u>-[e]-><v>, <v>-[e]-><u> resides in the file" << endl
 			<< "3. zero_based -> indicates that the coordinates in the file are zero based" << endl;
 	}
 	else {

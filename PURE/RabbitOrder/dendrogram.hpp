@@ -12,7 +12,7 @@ public:
 	~Dendrogram();
 
 	void connect(int u, int v);
-	std::vector<int> DFS();
+	std::vector<int> * DFS();
 	// Returns DFS order for each community in a vector,
 	// arr[i] contains the new label for i'th vertex
 private:
