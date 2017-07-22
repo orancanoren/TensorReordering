@@ -35,6 +35,8 @@ Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist, bool zeroBas
 #ifdef _DEBUG_HIGH
 	cout << "Ordering constructor invoked" << endl;
 #endif
+	if (!is.is_open()) throw InputFileErrorException();
+
 	cout << "Started taking inputs from stream" << endl;
 	auto begin = chrono::high_resolution_clock::now();
 	unsigned int vertexCount, edgeCount;
@@ -47,28 +49,39 @@ Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist, bool zeroBas
 		if (valuesExist) {
 			int v1, v2, weight;
 			is >> v1 >> v2 >> weight;
+			if (is.fail()) {
+				throw InvalidInputException();
+			}
+			
 			if (!zeroBased) {
 				v1 -= 1;
 				v2 -= 1;
 			}
 			insertEdge(v1, v2);
-			if (cin.fail()) {
-				throw InputErrorException();
+			if (symmetric) {
+				insertEdge(v2, v1);
 			}
 		}
 		else {
 			int v1, v2;
 			is >> v1 >> v2;
+			if (is.fail()) {
+				throw InvalidInputException();
+			}
+
 			if (!zeroBased) {
 				v1 -= 1;
 				v2 -= 1;
 			}
 			insertEdge(v1, v2);
+			if (symmetric) {
+				insertEdge(v2, v1);
+			}
 		}
 	}
 	new_id = vertexCount;
 	edgeCounter = edgeCount;
-	if (symmetric) {
+	if (!symmetric) {
 		edgeCounter /= 2;
 	}
 	auto end = chrono::high_resolution_clock::now();
@@ -94,10 +107,10 @@ void Ordering::insertEdge(int from, int to, int value) {
 	if (from >= vertices.size() || from < 0) throw NotFoundException(VERTEX_NOT_FOUND);
 
 	vertices[from].edges.insert({ to, value });
-	if (!symmetric) {
+	if (symmetric) {
 		vertices[to].edges.insert({ from, value });
 	}
-	if (symmetric) {
+	if (!symmetric) {
 		if (edgeInserted) {
 			edgeInserted = false;
 		}
@@ -111,13 +124,15 @@ void Ordering::insertEdge(int from, int to, int value) {
 }
 
 void Ordering::rabbitOrder(ofstream & os) {
-	// 0 - Calculate the new labels
-	auto begin = chrono::high_resolution_clock::now();
+	// 1 - Community Detection
+	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now();
 	community_detection();
-	auto end = chrono::high_resolution_clock::now();
+	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
+
 	cout << "Community Detection has been completed in "
 		<< chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 
+	// 2- Ordering Generation
 	begin = chrono::high_resolution_clock::now();
 	new_labels = ordering_generation();
 	end = chrono::high_resolution_clock::now();
@@ -252,11 +267,4 @@ double Ordering::modularity(int u, int v) {
 
 	double modularity = (((double)edge->second / (2.0 * m)) - (weighted_degree_u * weighted_degree_v / ((2.0 * m) * (2.0 * m))));
 	return modularity;
-}
-
-void Ordering::processOutput(const vector<int> & data, ofstream & os) {
-	for (vector<int>::const_iterator it = data.begin(); it != data.end(); it++) {
-		os << *it << " ";
-	}
-	os << endl;
 }

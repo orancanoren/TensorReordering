@@ -13,14 +13,9 @@ public:
 	Ordering(std::ifstream & is, bool symmetric = true, bool valuesExist = true, bool zeroBased = true); // Reads MatrixMarket graph
 	~Ordering();
 
-	void insertEdge(int from, int to, int value = 0);
+	void insertEdge(int from, int to, int value = 1);
 	void rabbitOrder(std::ofstream & os);
 private:
-	struct Edge {
-		Edge(int dest) : weight(1), dest(dest) { }
-		double weight;
-		int dest;
-	};
 	struct Vertex {
 		Vertex() : label(labelCounter++), merged(false) { }
 		// keep a hashtable of edges
@@ -45,8 +40,6 @@ private:
 	bool symmetric;
 	bool edgeInserted;
 	bool valuesExist;
-
-	void processOutput(const std::vector<int> & data, std::ofstream & os);
 
 	std::vector<Vertex> vertices;
 	std::vector<int> new_labels;
@@ -93,12 +86,17 @@ public:
 	}
 };
 
-class InputErrorException : public GraphException {
+class InputFileErrorException : public GraphException {
 public:
-	InputErrorException() {
-		excType = INPUT_ERROR;
-		msg = "Failure during input processing";
+	InputFileErrorException(char * m = "Cannot read the input file")
+		: GraphException() {
+		msg = m;
 	}
+};
+
+class InvalidInputException : public InputFileErrorException {
+public:
+	InvalidInputException() : InputFileErrorException("Error during input parse") {}
 };
 
 
