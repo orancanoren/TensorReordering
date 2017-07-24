@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <iterator>
 #include <functional>
+#include <climits>
 
 using namespace std;
 
