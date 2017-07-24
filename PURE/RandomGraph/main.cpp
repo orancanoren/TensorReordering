@@ -37,6 +37,10 @@ void generateGraph(ofstream & os, uint max_label, uint num_edges, bool zero_base
 		if (!zero_based) {
 			vertex1++;
 			vertex2++;
+			if (vertex1 > max_label)
+				vertex1 = 1;
+			if (vertex2 > max_label)
+				vertex2 = 1;
 		}
 
 		os << vertex1 << " " << vertex2;
@@ -48,11 +52,8 @@ void generateGraph(ofstream & os, uint max_label, uint num_edges, bool zero_base
 				os << endl << vertex2 << " " << vertex1 << " " << weight;
 			}
 		}
-		if (!symmetric) {
+		else if (!symmetric) {
 			os << endl << vertex2 << " " << vertex1;
-			if (values_exist) {
-				os << " " << weight;
-			}
 		}
 		os << endl;
 	}
