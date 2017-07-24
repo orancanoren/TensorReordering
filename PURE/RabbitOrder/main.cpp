@@ -6,6 +6,17 @@
 
 using namespace std;
 
+void help() {
+	cout << "Usage: PURE GRAPH [OPTION...]" << endl
+		<< "----------------------------------------------------" << endl
+		<< "Available options:" << endl << endl
+		<< "\t-zero_based \t\t vertices are labeled zero based" << endl
+		<< "\t-weighted \t\t creates a weighted graph" << endl
+		<< "\t-symmetric \t\t for the edge (u, v) the file doesn't contain (v, u)" << endl
+		<< "\t-o=FILE_NAME \t\t name of the output file" << endl
+		<< "\t-write_graph \t\t writes the re-ordered graph in MatrixMarket format" << endl;
+}
+
 int main(int argc, char * argv[]) {
 	// Parse the CLI arguments
 	vector<string> arguments(argc);
@@ -13,16 +24,17 @@ int main(int argc, char * argv[]) {
 		arguments[i] = string(argv[i]);
 	}
 
-	bool valuesExist = false, symmetric = true, oneBased = true;
+	bool valuesExist = false, symmetric = false, oneBased = true, writeGraph = false;
+	string input_filename, output_filename = "rabbit_permutation.txt";
 
-	if (find(begin(arguments), end(arguments), "-values_exist") != end(arguments)) {
+	if (find(begin(arguments), end(arguments), "-weighted") != end(arguments)) {
 		valuesExist = true;
 		cout << "Values exist in the data" << endl;
 	}
 
-	if (find(begin(arguments), end(arguments), "-not_symmetric") != end(arguments)) {
-		symmetric = false;
-		cout << "Asymmetrical input processing" << endl;
+	if (find(begin(arguments), end(arguments), "-symmetric") != end(arguments)) {
+		symmetric = true;
+		cout << "Symmetrical input processing" << endl;
 	}
 
 	if (find(begin(arguments), end(arguments), "-zero_based") != end(arguments)) {
@@ -30,37 +42,39 @@ int main(int argc, char * argv[]) {
 		cout << "Zero based input processing" << endl;
 	}
 
-	if (find(begin(arguments), end(arguments), "-help") != end(arguments) || argc == 1) {
-		cout << "PURE <file name> -[options]" << endl
-			<< "----------------------" << endl
-			<< "1. values_exist -> indicates that the input file conatins edge weights" << endl
-			<< "2. not_symmetric -> indicates that for <u>-[e]-><v>, <v>-[e]-><u> resides in the file" << endl
-			<< "3. zero_based -> indicates that the coordinates in the file are zero based" << endl;
+	if (find(begin(arguments), end(arguments), "-write_graph") != end(arguments)) {
+		writeGraph = true;
+		cout << "Writing graph in the end" << endl;
 	}
-	else {
-		try {
-			string filename;
-			for (int i = 0; i < argc; i++) {
-				if (arguments[i][0] != '-') {
-					filename = arguments[i];
-				}
-			}
-			if (filename == "") {
-				cout << "Name of the input file should be passed as [-<file name>]" << endl
-					<< "Type -help for more" << endl;
+
+	if (find(begin(arguments), end(arguments), "--help") != end(arguments) || argc == 1) {
+		help();
+		exit(0);
+	}
+
+	for (vector<string>::iterator it = begin(arguments); it != end(arguments); it++) {
+		if (it->length() >= 3 && it->substr(0, 3) == "-o=") {
+			if (it->length() == 3) {
+				cout << "Invalid file name" << endl;
 				exit(1);
 			}
-
-			ofstream os("rabbit_permutation.txt");
-			ifstream is(filename);
-
-			Ordering graph(is, symmetric, valuesExist, !oneBased);
-			graph.rabbitOrder(os);
+			output_filename = it->substr(3);
 		}
-		catch (GraphException & exc) {
-			cout << "Error occured:" << endl
-				<< exc.what() << endl;
+		if (it->at(0) != '-') {
+			input_filename = *it;
 		}
+	}
+	try {
+
+		ofstream os(output_filename);
+		ifstream is(input_filename);
+
+		Ordering graph(is, symmetric, valuesExist, !oneBased, writeGraph);
+		graph.rabbitOrder(os);
+	}
+	catch (GraphException & exc) {
+		cout << "Error occured:" << endl
+			<< exc.what() << endl;
 	}
 
 	return 0;

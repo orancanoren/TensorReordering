@@ -28,7 +28,8 @@ Ordering::Ordering(int vertexCount, bool symmetric) : dendrogram(vertexCount), s
 	edgeInserted = false;
 }
 
-Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist, bool zeroBased) : symmetric(symmetric), valuesExist(valuesExist)  {
+Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist, bool zeroBased, bool writeGraph) 
+	: symmetric(symmetric), valuesExist(valuesExist), writeGraph(writeGraph)  {
 	// Input Format:
 	// * First line: <vertex count> <vertex count> <edge count>
 	// <vertex id> <vertex id> <weight>
@@ -124,15 +125,26 @@ void Ordering::insertEdge(int from, int to, int value) {
 }
 
 void Ordering::rabbitOrder(ofstream & os) {
-	// 1 - Community Detection
-	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now();
-	community_detection();
-	chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
+	// 0 - Copy the graph [if necessary]
+	chrono::high_resolution_clock::time_point begin, end;
+	vector<Vertex> original_graph;
+	if (writeGraph) {
+		cout << "Creating a copy of the original graph" << endl;
+		begin = chrono::high_resolution_clock::now();
+		original_graph = vertices;
+		end = chrono::high_resolution_clock::now();
+		cout << "Graph has been copied in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
+	}
 
-	cout << "Community Detection has been completed in "
-		<< chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
+	// 1 - Community Detection
+	cout << "Starting community detection" << endl;
+	begin = chrono::high_resolution_clock::now();
+	community_detection();
+	end = chrono::high_resolution_clock::now();
+	cout << "Community detection has been completed in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 
 	// 2- Ordering Generation
+	cout << "Starting ordering generation" << endl;
 	begin = chrono::high_resolution_clock::now();
 	new_labels = *ordering_generation(); // memory leak
 	end = chrono::high_resolution_clock::now();
@@ -142,7 +154,39 @@ void Ordering::rabbitOrder(ofstream & os) {
 	for (vector<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++) {
 	  os << *it << " ";
 	}
+	os.close();
 	cout << "New permutations has been saved to file" << endl;
+
+	if (!writeGraph)
+		return;
+
+	cout << "Creating re-ordered graph file" << endl;
+	begin = chrono::high_resolution_clock::now();
+	int old_label = 0;
+	for (vector<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++, old_label++) {
+		Vertex & currentVertex = vertices[old_label];
+		currentVertex.label = *it;/*
+		for (unordered_map<int, int>::iterator edge = currentVertex.edges.begin(); edge != currentVertex.edges.end(); edge++) {
+			Vertex & neighbor = vertices[edge->first];
+			unordered_map<int, int>::iterator neighbor_edge = neighbor.edges.find(old_label);
+			assert(neighbor_edge != neighbor.edges.end());
+
+			int weight = neighbor_edge->second;
+			neighbor.edges.erase(neighbor_edge);
+			neighbor.edges.insert({ *it, weight });
+		}*/
+	}
+
+	ofstream orderedStream("ordered_graph.txt");
+	orderedStream << "% Asymmetrical Reordered Graph" << endl;
+	for (vector<Vertex>::const_iterator it = vertices.begin(); it != vertices.end(); it++) {
+		for (unordered_map<int, int>::const_iterator edge = it->edges.begin(); edge != it->edges.end(); edge++) {
+			orderedStream << it->label << " " << vertices[edge->first].label << " " << edge->second << endl;
+		}
+	}
+	
+	end = chrono::high_resolution_clock::now();
+	cout << "Ordered graph file has been saved in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 }
 
 // Class Ordering | Private Member Function Definitions

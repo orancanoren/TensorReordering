@@ -13,6 +13,8 @@ using namespace std;
 
 typedef unsigned int uint;
 
+const int MAX_WEIGHT = 200000;
+
 void help() {
 	cout << "Usage: PURE NUM_EDGES MAX_VERTEX_LABEL  [OPTION...]" << endl
 		<< "----------------------------------------------------" << endl
@@ -44,7 +46,7 @@ void generateGraph(ofstream & os, uint max_label, uint num_edges, bool zero_base
 		}
 
 		os << vertex1 << " " << vertex2;
-		uint weight = RNG();
+		uint weight = RNG() % MAX_WEIGHT;
 		if (values_exist) {
 			os << " " << weight;
 

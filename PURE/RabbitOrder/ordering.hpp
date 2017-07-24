@@ -10,7 +10,7 @@
 class Ordering {
 public:
 	Ordering(int vertexCount, bool symmetric = true);
-	Ordering(std::ifstream & is, bool symmetric = true, bool valuesExist = true, bool zeroBased = true); // Reads MatrixMarket graph
+	Ordering(std::ifstream & is, bool symmetric = true, bool valuesExist = true, bool zeroBased = true, bool writeGraph = false); // Reads MatrixMarket graph
 	~Ordering();
 
 	void insertEdge(int from, int to, int value = 1);
@@ -40,6 +40,7 @@ private:
 	bool symmetric;
 	bool edgeInserted;
 	bool valuesExist;
+	bool writeGraph;
 
 	std::vector<Vertex> vertices;
 	std::vector<int> new_labels;

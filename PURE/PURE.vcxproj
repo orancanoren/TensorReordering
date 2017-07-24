@@ -19,7 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RandomGraph\main.cpp" />
+    <ClCompile Include="RabbitOrder\dendrogram.cpp" />
+    <ClCompile Include="RabbitOrder\main.cpp" />
+    <ClCompile Include="RabbitOrder\ordering.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="RabbitOrder\dendrogram.hpp" />
+    <ClInclude Include="RabbitOrder\ordering.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>
