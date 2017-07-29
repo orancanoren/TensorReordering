@@ -18,9 +18,10 @@ RCM::RCM(int nodeCount, bool valuesExist, bool symmetric, bool oneBased)
 	}
 }
 
-RCM::RCM(ifstream & is, bool valuesExist, bool symmetric, bool oneBased) 
+RCM::RCM(string & iname, bool valuesExist, bool symmetric, bool oneBased) 
 	: valuesExist(valuesExist), symmetric(symmetric), oneBased(oneBased) {
 	// MatrixMarket input format expected [without comments]
+	ifstream is(iname);
 	if (!is.is_open()) throw InputFileErrorException();
 
 	cout << "Started taking inputs" << endl;
@@ -41,8 +42,10 @@ RCM::RCM(ifstream & is, bool valuesExist, bool symmetric, bool oneBased)
 		int lowerBound = oneBased ? 1 : 0;
 		int upperBound = oneBased ? vertexCount : vertexCount - 1;
 
-		if (v1 < lowerBound || v1 > upperBound || v2 < lowerBound || v2 > upperBound) 
-			throw InvalidInputException();
+		if (v1 < lowerBound || v1 > upperBound) 
+			throw VertexNotFound(v1);
+		if (v2 < lowerBound || v2 > upperBound)
+			throw VertexNotFound(v2);
 
 		insertEdge(v1, v2);
 		if (symmetric) {
@@ -127,7 +130,8 @@ void RCM::relabel() {
 	cout << "Labels have been reversed in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 }
 
-void RCM::printNewLabels(ofstream & os) const {
+void RCM::printNewLabels(string & oname) const {
+	ofstream os(oname);
 	cout << "Preparing the permutation file" << endl;
 	auto begin = chrono::high_resolution_clock::now();
 

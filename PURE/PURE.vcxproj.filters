@@ -15,21 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RabbitOrder\dendrogram.cpp">
+    <ClCompile Include="RCM\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RabbitOrder\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RabbitOrder\ordering.cpp">
+    <ClCompile Include="RCM\rcm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RabbitOrder\dendrogram.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RabbitOrder\ordering.hpp">
+    <ClInclude Include="RCM\rcm.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
