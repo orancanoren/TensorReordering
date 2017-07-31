@@ -19,11 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RCM\main.cpp" />
-    <ClCompile Include="RCM\rcm.cpp" />
+    <ClInclude Include="TensorMetrics\tmetrics.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RCM\rcm.hpp" />
+    <ClCompile Include="TensorMetrics\main.cpp" />
+    <ClCompile Include="TensorMetrics\tmetrics.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>
