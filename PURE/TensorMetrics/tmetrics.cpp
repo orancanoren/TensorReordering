@@ -59,7 +59,10 @@ double * Tmetrics::all_metrics() const {
 		}
 	}
 
-	double metrics[3] = { max_distance, max_value_normalized, max_value };
+	double * metrics = new double[3];
+	metrics[0] = max_distance;
+	metrics[1] = max_value_normalized;
+	metrics[2] = max_value;
 	return metrics;
 }
 
