@@ -2,6 +2,7 @@
 #include "tmetrics.hpp"
 #include <chrono>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
