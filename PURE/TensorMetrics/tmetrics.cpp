@@ -16,9 +16,9 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values)
 	getline(is, first_line);
 
 	int dimension, index = 0;
-	dimension = (no_values ? 1 : 0);
+	dimension = 0;
 	while (index != string::npos) {
-		index = first_line.find(' ');
+		index = first_line.find(' ', index + 1);
 		dimension++;
 	}
 	
@@ -31,13 +31,37 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values)
 			int component;
 			is >> component;
 			current_coordinates[i] = component;
-			diagonal[i] = min(diagonal[i], component);
+			diagonal[i] = max(diagonal[i], component);
+		}
+		if (!no_values) {
+			int value;
+			is >> value;
 		}
 		coords.push_back(Coordinate(current_coordinates));
 	}
 }
 
 // CLASS Tmetrics | Public Member Function Definitions
+
+double * Tmetrics::all_metrics() const {
+	double max_distance = INT_MIN;
+	double max_value_normalized = INT_MIN;
+	double max_value = INT_MIN;
+
+	for (list<Coordinate>::const_iterator it = coords.begin(); it != coords.end(); it++) {
+		max_distance = max(max_distance, distance_to_diagonal(*it)); // distance metric
+		// compute the pairwise differences and acquire the max
+		for (unsigned int i = 0; i < diagonal.size() - 1; i++) { // pairwise difference metrics
+			for (unsigned int j = i + 1; j < diagonal.size(); j++) {
+				max_value_normalized = max(abs((static_cast<double>(it->coor[i]) / diagonal[i]) - (static_cast<double>(it->coor[j]) / diagonal[j])), max_value_normalized); // normalized  difference metric
+				max_value = max(static_cast<double>(abs((it->coor[i] - it->coor[j]))), max_value); // original difference metric
+			}
+		}
+	}
+
+	double metrics[3] = { max_distance, max_value_normalized, max_value };
+	return metrics;
+}
 
 double Tmetrics::max_distance_to_diagonal() const {
 	double max_distance = INT_MIN;
@@ -53,8 +77,8 @@ double Tmetrics::metric_1(bool normalize) const {
 	for (list<Coordinate>::const_iterator it = coords.begin(); it != coords.end(); it++) {
 		double current_value;
 		// compute the pairwise differences and acquire the max
-		for (int i = 0; i < diagonal.size() - 1; i++) {
-			for (int j = i + 1; j < diagonal.size(); j++) {
+		for (unsigned int i = 0; i < diagonal.size() - 1; i++) {
+			for (unsigned int j = i + 1; j < diagonal.size(); j++) {
 				double difference;
 				if (normalize)
 					difference = abs((static_cast<double>(it->coor[i]) / diagonal[i]) - (static_cast<double>(it->coor[j]) / diagonal[j]));
@@ -77,7 +101,7 @@ double Tmetrics::distance_to_diagonal(const Coordinate & coord) const {
 		/ inner_product(diagonal.begin(), diagonal.end(), diagonal.begin(), 0);
 
 	double distance = 0;
-	for (int i = 0; i < diagonal.size(); i++) {
+	for (unsigned int i = 0; i < diagonal.size(); i++) {
 		distance += (PA[i] - (t * diagonal[i])) * (PA[i] - (t * diagonal[i]));
 	}
 	return sqrt(distance);
