@@ -15,8 +15,7 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values)
 	string first_line;
 	getline(is, first_line);
 
-	int dimension, index = 0;
-	dimension = 0;
+	int dimension = 0, index = 0;
 	while (index != string::npos) {
 		index = first_line.find(' ', index + 1);
 		dimension++;
@@ -28,10 +27,10 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values)
 	while (!is.eof()) {
 		vector<int> current_coordinates(dimension);
 		for (int i = 0; i < dimension; i++) {
-			int component;
+			float component;
 			is >> component;
 			current_coordinates[i] = component;
-			diagonal[i] = max(diagonal[i], component);
+			diagonal[i] = max(static_cast<float>(diagonal[i]), component);
 		}
 		if (!no_values) {
 			int value;
