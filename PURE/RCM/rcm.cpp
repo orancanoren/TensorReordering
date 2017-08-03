@@ -7,6 +7,7 @@
 #include <set>
 #include <climits>
 #include <chrono>
+#include <utility>
 
 using namespace std;
 
@@ -62,16 +63,17 @@ RCM::RCM(string & iname, bool valuesExist, bool symmetric, bool oneBased)
 	}
 }
 
-void RCM::insertEdge(int v1, int v2) {
+void RCM::insertEdge(int v1, int v2, int weight) {
 	// Pre-condition: the new edge doesn't exist
 	if (oneBased) {
 		v1 -= 1;
 		v2 -= 1;
 	}
-	vertices[v1].neighbors.push_back(v2);
+	pair<int, int> edge = { v1, weight };
+	vertices[v1].neighbors.push_back(edge);
 }
 
-void RCM::relabel() {
+void RCM::relabel(bool degree_based) {
 	// Pre-condition: At least 2 vertices exist in <vertices>
 
 	cout << "Started relabeling vertices" << endl;
@@ -95,8 +97,13 @@ void RCM::relabel() {
 		while (componentMarked) {
 			componentMarked = false;
 			Vertex & currentVertex = vertices[new_labels.front()];
-			currentVertex.neighbors.sort();
-			for (list<int>::iterator it = currentVertex.neighbors.begin(); it != currentVertex.neighbors.end(); it++) {
+			if (degree_based) {
+				currentVertex.neighbors.sort(_vertexCompare_degree);
+			}
+			else {
+				currentVertex.neighbors.sort(_vertexCompare_weight);
+			}
+			for (list< pair<int, int> >::iterator it = currentVertex.neighbors.begin(); it != currentVertex.neighbors.end(); it++) {
 				if (!vertices[*it].visited) {
 					vertices[*it].visited = true;
 					componentMarked = true;
@@ -141,4 +148,20 @@ void RCM::printNewLabels(string & oname) const {
 
 	auto end = chrono::high_resolution_clock::now();
 	cout << "Permutation file has been prepared in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
+}
+
+bool RCM::_vertexCompare_degree(const Vertex & lhs, const Vertex & rhs) const {
+	return lhs.neighbors.size() < rhs.neighbors.size();
+}
+
+bool RCM::_vertexCompare_weight(const Vertex & lhs, const Vertex & rhs) const {
+	int sum_v1 = 0, sum_v2 = 0;
+	for (list< pair<int, int> >::const_iterator it = lhs.neighbors.cbegin(); it != lhs.neighbors.cend(); it++) {
+		sum_v1 += it->second;
+	}
+	for (list< pair<int, int> >::const_iterator it = rhs.neighbors.cbegin(); it != lhs.neighbors.cend(); it++) {
+		sum_v2 += it->second;
+	}
+
+	return sum_v1 < sum_v2;
 }

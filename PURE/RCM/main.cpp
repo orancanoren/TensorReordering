@@ -18,7 +18,8 @@ void banner() {
 		<< "    |:|::/  /   \\:\\  \\             /:/  / " << endl
 		<< "    |:|\\/__/     \\:\\  \\           /:/  /  " << endl
 		<< "    |:|  |        \\:\\__\\         /:/  /   " << endl
-		<< "     \\|__|         \\/__/         \\/__/    " << endl;
+		<< "     \\|__|         \\/__/         \\/__/    " << endl
+		<< "------Reverse Cuthill Mckee Permutation------" << endl;
 }
 
 void usage() {
@@ -27,15 +28,16 @@ void usage() {
 }
 
 void help() {
+	banner();
 	usage();
-
 	cout << "----------------------------------------------------" << endl
 		<< "Available options:" << endl << endl
 		<< "\t-zero_based \t\t vertices are labeled zero based" << endl
 		<< "\t-weighted \t\t creates a weighted graph" << endl
 		<< "\t-symmetric \t\t for the edge (u, v) the file doesn't contain (v, u)" << endl
 		<< "\t-o=FILE_NAME \t\t name of the output file" << endl
-		<< "\t-no_write \t\t writes the re-ordered graph in MatrixMarket format" << endl;
+		<< "\t-no_write \t\t does NOT write the new permutation" << endl
+		<< "\t-degree_based \t\t computes degree based RCM" << endl;
 }
 
 int main(int argc, char * argv[]) {
@@ -46,7 +48,7 @@ int main(int argc, char * argv[]) {
 		arguments[i] = string(argv[i]);
 	}
 
-	bool values_exist = false, symmetric = false, zero_based = false, write = true;
+	bool values_exist = false, symmetric = false, zero_based = false, write = true, degree_based = false;;
 	string input_filename, output_filename = "RCM_permutation.txt";
 
 	if (find(begin(arguments), end(arguments), "--help") != end(arguments)) {
@@ -74,7 +76,11 @@ int main(int argc, char * argv[]) {
 		cout << "permutation will not be written" << endl;
 		write = false;
 	}
-	for (vector<string>::iterator it = begin(arguments); it != end(arguments); it++) {
+	if (find(begin(arguments), end(arguments), "-degree_based") != end(arguments)) {
+		cout << "Computing degree based RCM" << endl;
+		degree_based = true;
+	}
+	for (vector<string>::const_iterator it = cbegin(arguments); it != cend(arguments); it++) {
 		if (it->length() >= 3 && it->substr(0, 3) == "-o=") {
 			if (it->length() == 3) {
 				cout << "Invalid file name" << endl;
@@ -92,12 +98,11 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-
 	// 1 - RCM
 	try {	
 		banner();
 		RCM graph(input_filename, values_exist, symmetric, !zero_based);
-		graph.relabel();
+		graph.relabel(degree_based);
 		if (write) {
 			graph.printNewLabels(output_filename);
 		}

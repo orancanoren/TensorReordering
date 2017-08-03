@@ -4,6 +4,8 @@
 #include <chrono>
 #include <random>
 #include <functional> // std::bind()
+#include <algorithm>
+#include <climits>
 
 using namespace std;
 
@@ -12,8 +14,7 @@ typedef unsigned int uint;
 const int MAX_VALUE = 200000;
 
 void usage() {
-	cout << "Usage: PURE -dim=NUM_DIMENSIONS DIM_1_WIDTH DIM_2_WIDTH .. DIM_N_WIDTH -nnz=NNZ_COUNT [OPTION...]" << endl
-		<< "PURE --help for more info" << endl;
+	cout << "Usage: PURE -dim=NUM_DIMENSIONS DIM_1_WIDTH DIM_2_WIDTH .. DIM_N_WIDTH -nnz=NNZ_COUNT [OPTION...]" << endl;
 }
 
 void help() {
@@ -44,7 +45,7 @@ void generateTensor(const string & filename, bool zero_based, bool values_exist,
 			else {
 				RN = dimensions[j];
 				while (RN == dimensions[j]) {
-					RN = RNG();
+					RN = RNG() % dimensions[j];
 				}
 			}
 			os << RN;
@@ -76,6 +77,7 @@ int main(int argc, char * argv[]) {
 	}
 	else if (argc < 3) {
 		usage();
+		cout << "PURE --help for more info" << endl;
 		exit(0);
 	}
 

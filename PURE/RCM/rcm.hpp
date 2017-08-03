@@ -7,6 +7,7 @@
 #include <set>
 #include <fstream>
 #include <exception>
+#include <utility>
 
 class RCM {
 public:
@@ -14,8 +15,8 @@ public:
 	RCM(int nodeCount, bool valuesExist = false, bool symmetric = true, bool oneBased = true);
 	RCM(std::string & iname, bool valuesExist = false, bool symmetric = true, bool oneBased = true);
 
-	void insertEdge(int v1, int v2);
-	void relabel();
+	void insertEdge(int v1, int v2, int weight);
+	void relabel(bool degree_based = false);
 	void printNewLabels(std::string & oname) const;
 
 private:
@@ -25,13 +26,13 @@ private:
 		}
 
 		bool visited;
-		std::list<int> neighbors;
+		std::list< std::pair<int, int>> neighbors; // < neighor, weight >
 
-		bool operator < (const Vertex & rhs) const {
-			return this->neighbors.size() < rhs.neighbors.size();
-		}
 	};
 	
+	bool _vertexCompare_degree(const Vertex & lhs, const Vertex & rhs) const;
+	bool _vertexCompare_weight(const Vertex & lhs, const Vertex & rhs) const;
+
 	std::vector<Vertex> vertices;
 	std::set<int> unmarkedVertices;
 	std::list<int> new_labels;
