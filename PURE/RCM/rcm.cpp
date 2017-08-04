@@ -11,16 +11,8 @@
 
 using namespace std;
 
-RCM::RCM(int nodeCount, bool valuesExist, bool symmetric, bool oneBased)
-	: valuesExist(valuesExist), symmetric(symmetric), oneBased(oneBased) {
-	vertices.resize(nodeCount);
-	for (int i = 0; i < nodeCount; i++) {
-		unmarkedVertices.insert(i);
-	}
-}
-
-RCM::RCM(string & iname, bool valuesExist, bool symmetric, bool oneBased) 
-	: valuesExist(valuesExist), symmetric(symmetric), oneBased(oneBased) {
+RCM::RCM(string & iname, bool valuesExist, bool symmetric, bool oneBased, bool degree_based) 
+	: valuesExist(valuesExist), symmetric(symmetric), oneBased(oneBased), degree_based(degree_based) {
 	// MatrixMarket input format expected [without comments]
 	ifstream is(iname);
 	if (!is.is_open()) throw InputFileErrorException();
@@ -31,7 +23,8 @@ RCM::RCM(string & iname, bool valuesExist, bool symmetric, bool oneBased)
 	is >> vertexCount >> vertexCount >> edgeCount;
 	vertices.resize(vertexCount);
 	for (int i = 0; i < edgeCount; i++) {
-		int v1, v2, weight;
+		int v1, v2;
+		float weight = 1;
 		if (valuesExist) {
 			is >> v1 >> v2 >> weight;
 		}
@@ -48,9 +41,9 @@ RCM::RCM(string & iname, bool valuesExist, bool symmetric, bool oneBased)
 		if (v2 < lowerBound || v2 > upperBound)
 			throw VertexNotFound(v2);
 
-		insertEdge(v1, v2);
+		insertEdge(v1, v2, weight);
 		if (symmetric) {
-			insertEdge(v2, v1);
+			insertEdge(v2, v1, weight);
 		}
 	}
 	
@@ -63,7 +56,7 @@ RCM::RCM(string & iname, bool valuesExist, bool symmetric, bool oneBased)
 	}
 }
 
-void RCM::insertEdge(int v1, int v2, int weight) {
+void RCM::insertEdge(int v1, int v2, float weight) {
 	// Pre-condition: the new edge doesn't exist
 	if (oneBased) {
 		v1 -= 1;
@@ -73,19 +66,28 @@ void RCM::insertEdge(int v1, int v2, int weight) {
 	vertices[v1].neighbors.push_back(edge);
 }
 
-void RCM::relabel(bool degree_based) {
+void RCM::relabel() {
 	// Pre-condition: At least 2 vertices exist in <vertices>
 
 	cout << "Started relabeling vertices" << endl;
 	auto begin = chrono::high_resolution_clock::now();
 
 	while (!unmarkedVertices.empty()) {
-		// 1 - Find the vertex having smallest degree
-		pair<int, int> smallDegreeVertex = { 0, INT_MAX }; // < label, degree >
+		// 1 - Find the vertex having smallest degree / total degree weight
+		pair<int, float> smallDegreeVertex = { 0, INT_MAX }; // < label, degree >
 		for (vector<Vertex>::iterator it = vertices.begin(); it != vertices.end(); it++) {
 
-			if (it->neighbors.size() < smallDegreeVertex.second && !it->visited) {
+			if (degree_based && it->neighbors.size() < smallDegreeVertex.second && !it->visited) {
 				smallDegreeVertex = { (it - vertices.begin()), it->neighbors.size() };
+			}
+			else if (!degree_based) {
+				float weight_sum = 0;
+				for (list< pair<int, float> >::const_iterator neighbor = it->neighbors.cbegin(); neighbor != it->neighbors.cend(); neighbor++) {
+					weight_sum += neighbor->second;
+				}
+				if (weight_sum < smallDegreeVertex.second && !it->visited) {
+					smallDegreeVertex = { (it - vertices.begin()), weight_sum };
+				}
 			}
 		}
 
@@ -97,18 +99,19 @@ void RCM::relabel(bool degree_based) {
 		while (componentMarked) {
 			componentMarked = false;
 			Vertex & currentVertex = vertices[new_labels.front()];
-			if (degree_based) {
-				currentVertex.neighbors.sort(_vertexCompare_degree);
-			}
-			else {
-				currentVertex.neighbors.sort(_vertexCompare_weight);
-			}
-			for (list< pair<int, int> >::iterator it = currentVertex.neighbors.begin(); it != currentVertex.neighbors.end(); it++) {
-				if (!vertices[*it].visited) {
-					vertices[*it].visited = true;
+
+			// ===== Comparison & sorting =======
+			Comparator comp(*this);
+			currentVertex.neighbors.sort(comp); 
+			/* comparator function is a functor provided by the class [access to class members 
+			is required for the comparator to work - see RCM::operator()()]*/
+
+			for (list< pair<int, float> >::iterator it = currentVertex.neighbors.begin(); it != currentVertex.neighbors.end(); it++) {
+				if (!vertices[it->first].visited) {
+					vertices[it->first].visited = true;
 					componentMarked = true;
-					unmarkedVertices.erase(*it);
-					new_labels.push_back(*it);
+					unmarkedVertices.erase(it->first);
+					new_labels.push_back(it->first);
 				}
 			}
 		}
@@ -150,18 +153,18 @@ void RCM::printNewLabels(string & oname) const {
 	cout << "Permutation file has been prepared in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 }
 
-bool RCM::_vertexCompare_degree(const Vertex & lhs, const Vertex & rhs) const {
-	return lhs.neighbors.size() < rhs.neighbors.size();
-}
-
-bool RCM::_vertexCompare_weight(const Vertex & lhs, const Vertex & rhs) const {
-	int sum_v1 = 0, sum_v2 = 0;
-	for (list< pair<int, int> >::const_iterator it = lhs.neighbors.cbegin(); it != lhs.neighbors.cend(); it++) {
-		sum_v1 += it->second;
+bool RCM::Comparator::operator()(const EDGE & lhs, const EDGE & rhs) {
+	if (!rcm_obj.degree_based) {
+		float sum_lhs = 0, sum_rhs = 0;
+		for (EDGE_LIST::const_iterator it = rcm_obj.vertices[lhs.first].neighbors.cbegin(); it != rcm_obj.vertices[lhs.first].neighbors.cend(); it++) {
+			sum_lhs += it->second;
+		}
+		for (EDGE_LIST::const_iterator it = rcm_obj.vertices[rhs.first].neighbors.cbegin(); it != rcm_obj.vertices[rhs.first].neighbors.cend(); it++) {
+			sum_rhs += it->second;
+		}
+		return sum_lhs < sum_rhs;
 	}
-	for (list< pair<int, int> >::const_iterator it = rhs.neighbors.cbegin(); it != lhs.neighbors.cend(); it++) {
-		sum_v2 += it->second;
+	else {
+		return rcm_obj.vertices[lhs.first].neighbors.size() < rcm_obj.vertices[rhs.first].neighbors.size();
 	}
-
-	return sum_v1 < sum_v2;
 }

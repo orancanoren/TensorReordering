@@ -101,8 +101,8 @@ int main(int argc, char * argv[]) {
 	// 1 - RCM
 	try {	
 		banner();
-		RCM graph(input_filename, values_exist, symmetric, !zero_based);
-		graph.relabel(degree_based);
+		RCM graph(input_filename, values_exist, symmetric, !zero_based, degree_based);
+		graph.relabel();
 		if (write) {
 			graph.printNewLabels(output_filename);
 		}

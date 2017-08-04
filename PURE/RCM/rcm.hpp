@@ -9,14 +9,16 @@
 #include <exception>
 #include <utility>
 
+typedef std::pair<int, float> EDGE; // < neighor, weight >
+typedef std::list< EDGE > EDGE_LIST;
+
 class RCM {
 public:
 	// A graph is symmetric when it contains only the v1-v2 edge in undirected structure
-	RCM(int nodeCount, bool valuesExist = false, bool symmetric = true, bool oneBased = true);
-	RCM(std::string & iname, bool valuesExist = false, bool symmetric = true, bool oneBased = true);
+	explicit RCM(std::string & iname, bool valuesExist = false, bool symmetric = true, bool oneBased = true, bool degree_based = true);
 
-	void insertEdge(int v1, int v2, int weight);
-	void relabel(bool degree_based = false);
+	void insertEdge(int v1, int v2, float weight);
+	void relabel();
 	void printNewLabels(std::string & oname) const;
 
 private:
@@ -26,12 +28,15 @@ private:
 		}
 
 		bool visited;
-		std::list< std::pair<int, int>> neighbors; // < neighor, weight >
-
+		EDGE_LIST neighbors;
 	};
-	
-	bool _vertexCompare_degree(const Vertex & lhs, const Vertex & rhs) const;
-	bool _vertexCompare_weight(const Vertex & lhs, const Vertex & rhs) const;
+
+	struct Comparator {
+		Comparator(const RCM & rcm_obj) : rcm_obj(rcm_obj) { }
+		bool operator() (const EDGE & lhs, const EDGE & rhs); // comparator as a functor
+
+		const RCM & rcm_obj;
+	};
 
 	std::vector<Vertex> vertices;
 	std::set<int> unmarkedVertices;
@@ -40,6 +45,7 @@ private:
 	bool valuesExist;
 	bool symmetric;
 	bool oneBased;
+	bool degree_based;
 };
 
 // =======================
