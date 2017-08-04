@@ -37,7 +37,7 @@ void help() {
 		<< "\t-symmetric \t\t for the edge (u, v) the file doesn't contain (v, u)" << endl
 		<< "\t-o=FILE_NAME \t\t name of the output file" << endl
 		<< "\t-no_write \t\t does NOT write the new permutation" << endl
-		<< "\t-degree_based \t\t computes degree based RCM" << endl;
+		<< "\t-weight_based \t\t weight based reordering" << endl;
 }
 
 int main(int argc, char * argv[]) {
@@ -48,7 +48,7 @@ int main(int argc, char * argv[]) {
 		arguments[i] = string(argv[i]);
 	}
 
-	bool values_exist = false, symmetric = false, zero_based = false, write = true, degree_based = false;;
+	bool values_exist = false, symmetric = false, zero_based = false, write = true, degree_based = true;
 	string input_filename, output_filename = "RCM_permutation.txt";
 
 	if (find(begin(arguments), end(arguments), "--help") != end(arguments)) {
@@ -76,9 +76,9 @@ int main(int argc, char * argv[]) {
 		cout << "permutation will not be written" << endl;
 		write = false;
 	}
-	if (find(begin(arguments), end(arguments), "-degree_based") != end(arguments)) {
+	if (find(begin(arguments), end(arguments), "-weight_based") != end(arguments)) {
 		cout << "Computing degree based RCM" << endl;
-		degree_based = true;
+		degree_based = false;
 	}
 	for (vector<string>::const_iterator it = cbegin(arguments); it != cend(arguments); it++) {
 		if (it->length() >= 3 && it->substr(0, 3) == "-o=") {

@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RCM\main.cpp">
+    <ClCompile Include="TensorMetrics\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RCM\rcm.cpp">
+    <ClCompile Include="TensorMetrics\tmetrics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RCM\rcm.hpp">
+    <ClInclude Include="TensorMetrics\tmetrics.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
