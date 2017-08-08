@@ -33,7 +33,7 @@ void generateGraph(ofstream & os, uint max_label, uint num_edges, bool zero_base
 	
 	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now();
 
-	for (int i = 0; i < num_edges; i++) {
+	for (uint i = 0; i < num_edges; i++) {
 		uint vertex1 = RNG() % max_label;
 		uint vertex2 = RNG() % max_label;
 		if (!zero_based) {

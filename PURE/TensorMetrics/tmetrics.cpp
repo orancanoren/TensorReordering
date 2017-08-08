@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cassert>
 #include <iterator>
+#include <chrono>
 using namespace std;
 
 Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose) 
@@ -61,12 +62,20 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 // CLASS Tmetrics | Public Member Function Definitions
 
 void Tmetrics::all_metrics_all_modes() {
+	cout << "Outputing the files" << endl
+		<< "File format:" << endl
+		<< "<slice 1 distance metric> <slice 1 normalized pair metric> <slice 1 pair metric>" << endl
+		<< "..." << endl
+		<< "<slice n distance metric> <slice n normalized pair metric> <slice n pair metric>" << endl;
+	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now(), end;
 	const int dimension = diagonal.size();
 	for (int mode1 = 0; mode1 < dimension - 1; mode1++) {
 		for (int mode2 = mode1 + 1; mode2 < dimension; mode2++) {
 			metrics_on_modes(mode1, mode2);
 		}
 	}
+	end = chrono::high_resolution_clock::now();
+	cout << "Metric computation complete [ total - " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 }
 
 // CLASS Tmetrics | Private Member Function Definitions
@@ -83,7 +92,7 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 	vector<int> current_coordinates = coords.begin()->coor;
 	int index = 1;
 	for (list<Coordinate>::const_iterator it = next(coords.cbegin(), 1); it != coords.cend(); it++, index++) {
-		for (int i = 0; i < it->coor.size(); i++) {
+		for (uint i = 0; i < it->coor.size(); i++) {
 			if ((i != mode1 && i != mode2) && (current_coordinates[i] != it->coor[i])) {
 				current_coordinates = it->coor;
 				slice_indexes.push_back(index);
@@ -93,12 +102,13 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 
 	// 2 - For each slice, compute the metrics and output them
 	ofstream os("mode_" + to_string(mode1) + "_" + to_string(mode2) + ".metric");
-	os << "Format: <max distance metric - slice1> <normalized max value metric - slice 1> <max value metric - slice 1> <max distance metric - slice2> ..." << endl;
 	if (verbose) {
 		cout << "Modes " << mode1 << " - " << mode2 << endl
 			<< "-------------------------" << endl;
 	}
 	int previous = 0;
+	
+	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now(), end;
 	for (list<int>::const_iterator index = slice_indexes.cbegin(); index != slice_indexes.cend(); index++) {
 		double * metrics = all_metrics(previous, *index, mode1, mode2);
 		os << metrics[0] << " " << metrics[1] << " " << metrics[2] << " " << endl;
@@ -107,7 +117,9 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 		}
 		previous = *index;
 	}
-	cout << "-------------------------" << endl;
+	os.close();
+	end = chrono::high_resolution_clock::now();
+	cout << "Mode " << mode1 << " " << mode2 << " is computed [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 }
 
 double * Tmetrics::all_metrics(uint low, uint high, uint mode1, uint mode2) const {
