@@ -43,7 +43,7 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 			diagonal[i] = max(diagonal[i], component);
 		}
 		if (!no_values) {
-			int value;
+			float value;
 			is >> value;
 		}
 		coords.push_back(Coordinate(current_coordinates));
