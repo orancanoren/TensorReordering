@@ -11,7 +11,7 @@ typedef unsigned int uint;
 
 class Tmetrics {
 public:
-	Tmetrics(const std::string & in_file, bool no_values);
+	Tmetrics(const std::string & in_file, bool no_values = false, bool verbose = false);
 
 	void all_metrics_all_modes();
 
@@ -42,6 +42,7 @@ private:
 	double metric_1(bool normalize = true) const;
 
 	mutable unsigned int current_mode;
+	bool verbose;
 };
 
 #endif

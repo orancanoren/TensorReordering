@@ -44,7 +44,7 @@ int main(int argc, char * argv[]) {
 	}
 	if (find(begin(arguments), end(arguments), "-v") != end(arguments)) {
 		cout << "Verbose mode" << endl;
-		values_exist = false;
+		verbose = true;
 	}
 
 	string file;
@@ -61,7 +61,7 @@ int main(int argc, char * argv[]) {
 
 	// 1 - Compute the metrics
 	
-	Tmetrics metric_calculator(file, !values_exist);
+	Tmetrics metric_calculator(file, !values_exist, verbose);
 	
 	
 	cout << "**********************" << endl;

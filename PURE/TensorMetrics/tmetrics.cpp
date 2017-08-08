@@ -11,8 +11,8 @@
 #include <iterator>
 using namespace std;
 
-Tmetrics::Tmetrics(const string & in_file, bool no_values) 
-	: no_values(no_values), current_mode(0) {
+Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose) 
+	: no_values(no_values), current_mode(0), verbose(verbose) {
 	ifstream is(in_file);
 	if (!is.is_open()) {
 		cout << "Cannot open the provided tensor file" << endl;
@@ -94,13 +94,17 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 	// 2 - For each slice, compute the metrics and output them
 	ofstream os("mode_" + to_string(mode1) + "_" + to_string(mode2) + ".metric");
 	os << "Format: <max distance metric - slice1> <normalized max value metric - slice 1> <max value metric - slice 1> <max distance metric - slice2> ..." << endl;
-	cout << "Modes " << mode1 << " - " << mode2 << endl
-		<< "-------------------------" << endl;
+	if (verbose) {
+		cout << "Modes " << mode1 << " - " << mode2 << endl
+			<< "-------------------------" << endl;
+	}
 	int previous = 0;
 	for (list<int>::const_iterator index = slice_indexes.cbegin(); index != slice_indexes.cend(); index++) {
 		double * metrics = all_metrics(previous, *index, mode1, mode2);
 		os << metrics[0] << " " << metrics[1] << " " << metrics[2] << " " << endl;
-		cout << metrics[0] << " " << metrics[1] << " " << metrics[2] << " " << endl;
+		if (verbose) {
+			cout << metrics[0] << " " << metrics[1] << " " << metrics[2] << " " << endl;
+		}
 		previous = *index;
 	}
 	cout << "-------------------------" << endl;
@@ -130,16 +134,15 @@ double * Tmetrics::all_metrics(uint low, uint high, uint mode1, uint mode2) cons
 }
 
 double Tmetrics::distance_to_diagonal(const Coordinate & coord, uint mode1, uint mode2) const {
-	// A = (0, 0, ..., 0) B = (n1, n2, ..., n_n)
-	const vector<int> & PA = coord.coor;
+	// A = (0, 0) B = (mode1, mode2)
+	const pair<uint, uint> P = { coord.coor[mode1], coord.coor[mode2] };
+	const pair<uint, uint> diagonal = { mode1, mode2 };
+	// PA vector is equivalent to P
 	
-	double t = inner_product(PA.begin(), PA.end(), diagonal.begin(), 0)
-		/ inner_product(diagonal.begin(), diagonal.end(), diagonal.begin(), 0);
+	double t = (P.first * diagonal.first + P.second + diagonal.second)
+		/ (diagonal.first * diagonal.first + diagonal.second + diagonal.second);
 
-	double distance = 0;
-	for (unsigned int i = 0; i < diagonal.size(); i++) {
-		distance += (PA[i] - (t * diagonal[i])) * (PA[i] - (t * diagonal[i]));
-	}
+	double distance = P.first - (t * diagonal.first) + P.second - (t * diagonal.second);
 	return sqrt(distance);
 }
 
