@@ -48,8 +48,7 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values)
 		}
 		coords.push_back(Coordinate(current_coordinates));
 	}
-	cout << "Tensor information --------------" << endl
-		<< "Dimensions: ";
+	cout << "Dimensions: ";
 	for (vector<int>::const_iterator it = diagonal.cbegin(); it != diagonal.cend(); it++) {
 		cout << *it;
 		if (next(it, 1) != diagonal.end()) {
@@ -77,11 +76,6 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 
 	// 0 - Sort the coordinate matrix
 	Comparator comp(mode1, mode2);
-	const Coordinate coord1 = coords.begin()->coor;
-	const Coordinate coord2 = next(coords.begin(), 1)->coor;
-	bool result = comp(coord1, coord2);
-
-
 	coords.sort(comp);
 
 	// 1 - Determine the slices

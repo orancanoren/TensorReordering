@@ -15,7 +15,8 @@ void help() {
 		<< "-----------------------" << endl;
 	usage();
 	cout << "Avaiable options:" << endl
-		<< "\t-no_values \t\t tensor file does NOT contain values" << endl;
+		<< "\t-no_values \t\t tensor file does NOT contain values" << endl
+		<< "\t-v \t\t verbose, i.e. prints each metric to STDOUT" << endl;
 }
 
 int main(int argc, char * argv[]) {
@@ -26,7 +27,7 @@ int main(int argc, char * argv[]) {
 		arguments[i] = string(argv[i]);
 	}
 
-	bool values_exist = true, zero_based = false;
+	bool values_exist = true, zero_based = false, verbose = false;;
 
 	if (find(begin(arguments), end(arguments), "--help") != end(arguments)) {
 		help();
@@ -38,7 +39,11 @@ int main(int argc, char * argv[]) {
 	}
 
 	if (find(begin(arguments), end(arguments), "-no_values") != end(arguments)) {
-		cout << "Coordinate only tensor generation" << endl;
+		cout << "COO contains coordinates only" << endl;
+		values_exist = false;
+	}
+	if (find(begin(arguments), end(arguments), "-v") != end(arguments)) {
+		cout << "Verbose mode" << endl;
 		values_exist = false;
 	}
 
