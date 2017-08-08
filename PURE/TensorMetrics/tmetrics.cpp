@@ -14,6 +14,10 @@ using namespace std;
 Tmetrics::Tmetrics(const string & in_file, bool no_values) 
 	: no_values(no_values), current_mode(0) {
 	ifstream is(in_file);
+	if (!is.is_open()) {
+		cout << "Cannot open the provided tensor file" << endl;
+		exit(1);
+	}
 	// 0 - Determine the dimension of the tensor
 	string first_line;
 	getline(is, first_line);
@@ -68,75 +72,54 @@ void Tmetrics::all_metrics_all_modes() {
 
 // CLASS Tmetrics | Private Member Function Definitions
 
-double Tmetrics::distance_to_diagonal(const Coordinate & coord) const {
-	// A = (0, 0, ..., 0) B = (n1, n2, ..., n_n)
-	const vector<int> & PA = coord.coor;
-	double t = inner_product(PA.begin(), PA.end(), diagonal.begin(), 0)
-		/ inner_product(diagonal.begin(), diagonal.end(), diagonal.begin(), 0);
-
-	double distance = 0;
-	for (unsigned int i = 0; i < diagonal.size(); i++) {
-		distance += (PA[i] - (t * diagonal[i])) * (PA[i] - (t * diagonal[i]));
-	}
-	return sqrt(distance);
-}
-
-bool Tmetrics::Comparator::operator() (const Coordinate & lhs, const Coordinate & rhs) const{
-	assert(mode1 != mode2);
-	// operator() implements the `strict less` opearation
-	const int dimension = lhs.coor.size();
-	for (int i = 0; i < dimension; i++) {
-		// Treat coordinate values as if mode1 & mode2 were at the end
-		if ((i != mode1 && i != mode2) && (lhs.coor[i] < rhs.coor[i])) {
-			return true;
-		}
-	}
-	if (mode1 > mode2 && lhs.coor[mode1] < rhs.coor[mode1]) {
-		return true;
-	}
-	else if (mode2 > mode1 && lhs.coor[mode2] < rhs.coor[mode2]) {
-		return true;
-	}
-	return false;
-}
-
-void Tmetrics::metrics_on_modes(int mode1, int mode2) {
+void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 	assert(mode1 < diagonal.size() && mode2 < diagonal.size());
 
 	// 0 - Sort the coordinate matrix
-	Comparator comp(*this, mode1, mode2);
+	Comparator comp(mode1, mode2);
+	const Coordinate coord1 = coords.begin()->coor;
+	const Coordinate coord2 = next(coords.begin(), 1)->coor;
+	bool result = comp(coord1, coord2);
+
+
 	coords.sort(comp);
 
 	// 1 - Determine the slices
 	list<int> slice_indexes; // <first_slice_end> -> <second_slice_end> -> ... -> <final_slice_end>
 	vector<int> current_coordinates = coords.begin()->coor;
-	int index = 0;
-	for (list<Coordinate>::const_iterator it = coords.cbegin(); it != coords.cend(); it++, index++) {
-		if (it->coor != current_coordinates) {
-			current_coordinates = it->coor;
-			slice_indexes.push_back(index);
+	int index = 1;
+	for (list<Coordinate>::const_iterator it = next(coords.cbegin(), 1); it != coords.cend(); it++, index++) {
+		for (int i = 0; i < it->coor.size(); i++) {
+			if ((i != mode1 && i != mode2) && (current_coordinates[i] != it->coor[i])) {
+				current_coordinates = it->coor;
+				slice_indexes.push_back(index);
+			}
 		}
 	}
 
 	// 2 - For each slice, compute the metrics and output them
 	ofstream os("mode_" + to_string(mode1) + "_" + to_string(mode2) + ".metric");
 	os << "Format: <max distance metric - slice1> <normalized max value metric - slice 1> <max value metric - slice 1> <max distance metric - slice2> ..." << endl;
+	cout << "Modes " << mode1 << " - " << mode2 << endl
+		<< "-------------------------" << endl;
 	int previous = 0;
 	for (list<int>::const_iterator index = slice_indexes.cbegin(); index != slice_indexes.cend(); index++) {
-		double * metrics = all_metrics(previous, *index);
-		os << metrics[0] << " " << metrics[1] << " " << metrics[2] << " ";
+		double * metrics = all_metrics(previous, *index, mode1, mode2);
+		os << metrics[0] << " " << metrics[1] << " " << metrics[2] << " " << endl;
+		cout << metrics[0] << " " << metrics[1] << " " << metrics[2] << " " << endl;
 		previous = *index;
 	}
+	cout << "-------------------------" << endl;
 }
 
-double * Tmetrics::all_metrics(int low, int high) const {
+double * Tmetrics::all_metrics(uint low, uint high, uint mode1, uint mode2) const {
 	double max_distance = INT_MIN;
 	double max_value_normalized = INT_MIN;
 	double max_value = INT_MIN;
 
 	for (list<Coordinate>::const_iterator it = next(coords.cbegin(), low); it != next(coords.begin(), high); it++) {
-		max_distance = max(max_distance, distance_to_diagonal(*it)); // distance metric
-																	 // compute the pairwise differences and acquire the max
+		max_distance = max(max_distance, distance_to_diagonal(*it, mode1, mode2)); // distance metric
+																				   // compute the pairwise differences and acquire the max
 		for (unsigned int i = 0; i < diagonal.size() - 1; i++) { // pairwise difference metrics
 			for (unsigned int j = i + 1; j < diagonal.size(); j++) {
 				max_value_normalized = max(abs((static_cast<double>(it->coor[i]) / diagonal[i]) - (static_cast<double>(it->coor[j]) / diagonal[j])), max_value_normalized); // normalized  difference metric
@@ -152,10 +135,24 @@ double * Tmetrics::all_metrics(int low, int high) const {
 	return metrics;
 }
 
-double Tmetrics::max_distance_to_diagonal() const {
+double Tmetrics::distance_to_diagonal(const Coordinate & coord, uint mode1, uint mode2) const {
+	// A = (0, 0, ..., 0) B = (n1, n2, ..., n_n)
+	const vector<int> & PA = coord.coor;
+	
+	double t = inner_product(PA.begin(), PA.end(), diagonal.begin(), 0)
+		/ inner_product(diagonal.begin(), diagonal.end(), diagonal.begin(), 0);
+
+	double distance = 0;
+	for (unsigned int i = 0; i < diagonal.size(); i++) {
+		distance += (PA[i] - (t * diagonal[i])) * (PA[i] - (t * diagonal[i]));
+	}
+	return sqrt(distance);
+}
+
+double Tmetrics::max_distance_to_diagonal(uint mode1, uint mode2) const {
 	double max_distance = INT_MIN;
 	for (list<Coordinate>::const_iterator it = coords.begin(); it != coords.end(); it++) {
-		max_distance = max(max_distance, distance_to_diagonal(*it));
+		max_distance = max(max_distance, distance_to_diagonal(*it, mode1, mode2));
 	}
 	return max_distance;
 }
@@ -179,4 +176,26 @@ double Tmetrics::metric_1(bool normalize) const {
 		max_value = max(max_value, current_value);
 	}
 	return max_value;
+}
+
+bool Tmetrics::Comparator::operator() (const Coordinate & lhs, const Coordinate & rhs) const {
+	assert(mode1 != mode2 && lhs.coor.size() == rhs.coor.size());
+	// operator() implements the `strict less` opearation
+	const uint dimension = lhs.coor.size();
+	for (uint i = 0; i < dimension; i++) {
+		// Treat coordinate values as if mode1 & mode2 were at the end
+		if ((i != mode1 && i != mode2)) {
+			if (lhs.coor[i] < rhs.coor[i])
+				return true;
+			else if (lhs.coor[i] > rhs.coor[i])
+				return false;
+		}
+	}
+	if (mode1 > mode2 && lhs.coor[mode1] < rhs.coor[mode1]) {
+		return true;
+	}
+	else if (mode2 > mode1 && lhs.coor[mode2] < rhs.coor[mode2]) {
+		return true;
+	}
+	return false;
 }
