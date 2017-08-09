@@ -66,11 +66,15 @@ void Tmetrics::all_metrics_all_modes() {
 		<< "File format:" << endl
 		<< "<slice 1 distance metric> <slice 1 normalized pair metric> <slice 1 pair metric>" << endl
 		<< "..." << endl
-		<< "<slice n distance metric> <slice n normalized pair metric> <slice n pair metric>" << endl;
+		<< "<slice n distance metric> <slice n normalized pair metric> <slice n pair metric>" << endl
+		<< "--------------------------------------------------------" << endl;
 	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now(), end;
 	const int dimension = diagonal.size();
 	for (int mode1 = 0; mode1 < dimension - 1; mode1++) {
 		for (int mode2 = mode1 + 1; mode2 < dimension; mode2++) {
+			if (verbose) {
+				cout << "Computing modes " << mode1 << " " << mode2 << endl;
+			}
 			metrics_on_modes(mode1, mode2);
 		}
 	}
@@ -83,9 +87,20 @@ void Tmetrics::all_metrics_all_modes() {
 void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 	assert(mode1 < diagonal.size() && mode2 < diagonal.size());
 
+	cout << "Modes " << mode1 << " - " << mode2 << endl
+		<< "-------------------------" << endl;
+	chrono::high_resolution_clock::time_point begin, end;
 	// 0 - Sort the coordinate matrix
 	Comparator comp(mode1, mode2);
+	if (verbose) {
+		cout << "Sorting the coordinates" << endl;
+		begin = chrono::high_resolution_clock::now();
+	}
 	coords.sort(comp);
+	if (verbose) {
+		cout << "Coordinates sorted [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl
+			<< "Setting slice indexes" << endl;
+	}
 
 	// 1 - Determine the slices
 	list<int> slice_indexes; // <first_slice_end> -> <second_slice_end> -> ... -> <final_slice_end>
@@ -102,12 +117,12 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 
 	// 2 - For each slice, compute the metrics and output them
 	ofstream os("mode_" + to_string(mode1) + "_" + to_string(mode2) + ".metric");
-	if (verbose) {
-		cout << "Modes " << mode1 << " - " << mode2 << endl
-			<< "-------------------------" << endl;
-	}
+
 	int previous = 0;
-	
+	if (verbose) {
+		cout << "Computing the metrics" << endl;
+		begin = chrono::high_resolution_clock::now();
+	}
 	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now(), end;
 	for (list<int>::const_iterator index = slice_indexes.cbegin(); index != slice_indexes.cend(); index++) {
 		double * metrics = all_metrics(previous, *index, mode1, mode2);
@@ -119,7 +134,9 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 	}
 	os.close();
 	end = chrono::high_resolution_clock::now();
-	cout << "Mode " << mode1 << " " << mode2 << " is computed [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
+	if (verbose) {
+		cout << "Mode " << mode1 << " " << mode2 << " metrics are computed [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
+	}
 }
 
 double * Tmetrics::all_metrics(uint low, uint high, uint mode1, uint mode2) const {

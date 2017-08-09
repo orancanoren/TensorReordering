@@ -16,7 +16,8 @@ void help() {
 	usage();
 	cout << "Avaiable options:" << endl
 		<< "\t-no_values \t\t tensor file does NOT contain values" << endl
-		<< "\t-v \t\t verbose, i.e. prints each metric to STDOUT" << endl;
+		<< "\t-v \t\t verbose, i.e. prints each metric to STDOUT" << endl
+		<< "-w \t\t write matrices" << endl;
 }
 
 int main(int argc, char * argv[]) {
@@ -68,8 +69,7 @@ int main(int argc, char * argv[]) {
 	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now(), end;
 	metric_calculator.all_metrics_all_modes();
 	end = chrono::high_resolution_clock::now();
-	cout << "**********************" << endl
-		<< "Computation time: " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
+	cout << "**********************" << endl;
 
 	return 0;
 }
