@@ -155,6 +155,7 @@ double * Tmetrics::all_metrics(list<Coordinate>::const_iterator & coordinate_ite
 		}
 
 		iterator_position++;
+		coordinate_iter++;
 	}
 
 	double * metrics = new double[3];
