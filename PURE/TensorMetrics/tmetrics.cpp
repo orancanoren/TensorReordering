@@ -123,7 +123,7 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 		cout << "Computing the metrics" << endl;
 		begin = chrono::high_resolution_clock::now();
 	}
-	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now(), end;
+	begin = chrono::high_resolution_clock::now();
 	for (list<int>::const_iterator index = slice_indexes.cbegin(); index != slice_indexes.cend(); index++) {
 		double * metrics = all_metrics(previous, *index, mode1, mode2);
 		os << metrics[0] << " " << metrics[1] << " " << metrics[2] << " " << endl;
