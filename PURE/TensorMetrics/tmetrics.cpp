@@ -117,20 +117,20 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 
 	// 2 - For each slice, compute the metrics and output them
 	ofstream os("mode_" + to_string(mode1) + "_" + to_string(mode2) + ".metric");
-
-	int previous = 0;
 	if (verbose) {
 		cout << "Computing the metrics" << endl;
 		begin = chrono::high_resolution_clock::now();
 	}
 	begin = chrono::high_resolution_clock::now();
+
+	list<Coordinate>::const_iterator coordinate_iter = coords.begin();
+	uint iterator_position = 0; // tracks the position of <coordinate_iter>
 	for (list<int>::const_iterator index = slice_indexes.cbegin(); index != slice_indexes.cend(); index++) {
-		double * metrics = all_metrics(previous, *index, mode1, mode2);
+		double * metrics = all_metrics(coordinate_iter, iterator_position, *index, mode1, mode2);
 		os << metrics[0] << " " << metrics[1] << " " << metrics[2] << " " << endl;
 		if (verbose) {
 			cout << metrics[0] << " " << metrics[1] << " " << metrics[2] << " " << endl;
 		}
-		previous = *index;
 	}
 	os.close();
 	end = chrono::high_resolution_clock::now();
@@ -139,20 +139,22 @@ void Tmetrics::metrics_on_modes(uint mode1, uint mode2) {
 	}
 }
 
-double * Tmetrics::all_metrics(uint low, uint high, uint mode1, uint mode2) const {
+double * Tmetrics::all_metrics(list<Coordinate>::const_iterator & coordinate_iter, uint & iterator_position, const uint right_bound, uint mode1, uint mode2) const {
 	double max_distance = INT_MIN;
 	double max_value_normalized = INT_MIN;
 	double max_value = INT_MIN;
 
-	for (list<Coordinate>::const_iterator it = next(coords.cbegin(), low); it != next(coords.begin(), high); it++) {
-		max_distance = max(max_distance, distance_to_diagonal(*it, mode1, mode2)); // distance metric
+	while (iterator_position <= right_bound) {
+		max_distance = max(max_distance, distance_to_diagonal(coordinate_iter, mode1, mode2)); // distance metric
 																				   // compute the pairwise differences and acquire the max
 		for (unsigned int i = 0; i < diagonal.size() - 1; i++) { // pairwise difference metrics
 			for (unsigned int j = i + 1; j < diagonal.size(); j++) {
-				max_value_normalized = max(abs((static_cast<double>(it->coor[i]) / diagonal[i]) - (static_cast<double>(it->coor[j]) / diagonal[j])), max_value_normalized); // normalized  difference metric
-				max_value = max(static_cast<double>(abs((it->coor[i] - it->coor[j]))), max_value); // original difference metric
+				max_value_normalized = max(abs((static_cast<double>(coordinate_iter->coor[i]) / diagonal[i]) - (static_cast<double>(coordinate_iter->coor[j]) / diagonal[j])), max_value_normalized); // normalized  difference metric
+				max_value = max(static_cast<double>(abs((coordinate_iter->coor[i] - coordinate_iter->coor[j]))), max_value); // original difference metric
 			}
 		}
+
+		iterator_position++;
 	}
 
 	double * metrics = new double[3];
@@ -162,9 +164,10 @@ double * Tmetrics::all_metrics(uint low, uint high, uint mode1, uint mode2) cons
 	return metrics;
 }
 
-double Tmetrics::distance_to_diagonal(const Coordinate & coord, uint mode1, uint mode2) const {
+double Tmetrics::distance_to_diagonal(const list<Coordinate>::const_iterator & coord_iter, uint mode1, uint mode2) const {
 	// A = (0, 0) B = (mode1, mode2)
-	const pair<uint, uint> P = { coord.coor[mode1], coord.coor[mode2] };
+	const vector<int> & current_coordinates = coord_iter->coor;
+	const pair<uint, uint> P = { current_coordinates[mode1], current_coordinates[mode2] };
 	const pair<uint, uint> diagonal = { mode1, mode2 };
 	// PA vector is equivalent to P
 	
@@ -178,7 +181,7 @@ double Tmetrics::distance_to_diagonal(const Coordinate & coord, uint mode1, uint
 double Tmetrics::max_distance_to_diagonal(uint mode1, uint mode2) const {
 	double max_distance = INT_MIN;
 	for (list<Coordinate>::const_iterator it = coords.begin(); it != coords.end(); it++) {
-		max_distance = max(max_distance, distance_to_diagonal(*it, mode1, mode2));
+		max_distance = max(max_distance, distance_to_diagonal(it, mode1, mode2));
 	}
 	return max_distance;
 }

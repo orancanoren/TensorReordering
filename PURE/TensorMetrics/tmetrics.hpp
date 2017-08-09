@@ -34,8 +34,8 @@ private:
 	std::vector<int> diagonal;
 
 	void metrics_on_modes(uint mode1, uint mode2); // prints out slice metrics for a given pair of tensor modes
-	double distance_to_diagonal(const Coordinate & coord, uint mode1, uint mode2) const;
-	double * all_metrics(uint low, uint high, uint mode1, uint mode2) const;
+	double distance_to_diagonal(const std::list<Coordinate>::const_iterator &, uint mode1, uint mode2) const;
+	double * all_metrics(std::list<Coordinate>::const_iterator &  low, uint & iter_position, const uint right_bound, uint mode1, uint mode2) const;
 	double max_distance_to_diagonal(uint mode1, uint mode2) const;
 	double metric_1(bool normalize = true) const;
 
