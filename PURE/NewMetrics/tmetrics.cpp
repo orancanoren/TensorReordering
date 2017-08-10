@@ -119,7 +119,6 @@ pair<double, double> Tmetrics::fiber_metrics(uint mode) {
 	int iterator_position = 0;
 	int fiber_count = 0;
 	for (list<int>::const_iterator index = fiber_indices.cbegin(); index != fiber_indices.cend(); index++, fiber_count++, it++) {
-		cout << *index;
 		int low_bound = INT_MAX, high_bound = INT_MIN;
 		int nnz_count = 0;
 		for (; iterator_position != *index; iterator_position++) {
