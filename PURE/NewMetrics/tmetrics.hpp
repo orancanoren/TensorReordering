@@ -18,8 +18,8 @@ public:
 	void mode_independent_metrics(); // For all NNZ, avg. distance to diag. | pairwise diff. avg | normalized pairwise diff.
 private:
 	struct Coordinate {
-		Coordinate(const std::vector<int> & vec) : coor(vec) { }
-		std::vector<int> coor;
+		Coordinate(const std::vector<uint> & vec) : coor(vec) { }
+		std::vector<uint> coor;
 	};
 
 	struct Comparator {
@@ -28,15 +28,16 @@ private:
 
 		bool operator() (const Coordinate & lhs, const Coordinate & rhs) const;
 
-		const int mode;
+		const uint mode;
 	};
 
 	// Member variables
 	std::list<Coordinate> coords;
-	std::vector<int> diagonal; // for mode independent metrics
+	std::vector<uint> diagonal; // for mode independent metrics
 	bool no_values; // CLI option
 	bool verbose; // CLI option
-	std::list<int> fiber_indices; // stores the index of coords for which a new fiber begins
+	std::list<uint> fiber_indices; // stores the index of coords for which a new fiber begins
+	double diagonal_self_dot_product;
 
 	// Mode dependent metrics
 	std::pair<double, double> fiber_metrics(uint mode); // for one fiber, returns the avg. fiber bandwidth & density
@@ -47,6 +48,7 @@ private:
 
 	// Utilities
 	void createFibers(uint mode);
+	uint dot_product(const std::vector<uint> & u1, const std::vector<uint> & u2) const;
 };
 
 #endif
