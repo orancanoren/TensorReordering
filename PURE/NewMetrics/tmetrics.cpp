@@ -66,12 +66,11 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 // CLASS Tmetrics | Public Member Function Definitions
 
 void Tmetrics::mode_dependent_metrics() {
+	cout << "------Mode Dependent Metrics ------" << endl
+		 << "<avg. fiber bandwidth> <avg. fiber density>" << endl;
 	for (uint i = 0; i < diagonal.size(); i++) {
 		pair<double, double> metrics = fiber_metrics(i);
-		ofstream os("mode_" + to_string(i) + ".metric");
-		os << "<avg. fiber bandwidth> <avg. fiber density>" << endl;
-		os << metrics.first << " " << metrics.second << endl;
-		os.close();
+		cout << endl << "mode_" + to_string(i)  << ": " << metrics.first << " " << metrics.second << endl << endl;
 	}
 }
 
@@ -220,6 +219,7 @@ void Tmetrics::createFibers(uint mode) {
 	}
 
 	// 1 - Detect the indices of fibers
+	fiber_indices.clear();
 	vector<uint> current_coordinates = coords.cbegin()->coor;
 	uint coordinate_index = 1;
 	for (list<Coordinate>::const_iterator it = next(coords.cbegin(), 1); it != coords.cend(); it++, coordinate_index++) {
