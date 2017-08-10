@@ -118,7 +118,8 @@ pair<double, double> Tmetrics::fiber_metrics(uint mode) {
 	list<Coordinate>::const_iterator it = coords.cbegin();
 	int iterator_position = 0;
 	int fiber_count = 0;
-	for (list<int>::const_iterator index = fiber_indices.cbegin(); index != fiber_indices.cend(); index++, fiber_count++) {
+	for (list<int>::const_iterator index = fiber_indices.cbegin(); index != fiber_indices.cend(); index++, fiber_count++, it++) {
+		cout << *index;
 		int low_bound = INT_MAX, high_bound = INT_MIN;
 		int nnz_count = 0;
 		for (; iterator_position != *index; iterator_position++) {
@@ -213,17 +214,18 @@ void Tmetrics::createFibers(uint mode) {
 
 	// 1 - Detect the indices of fibers
 	vector<int> current_coordinates = coords.cbegin()->coor;
-	for (list<Coordinate>::const_iterator it = next(coords.cbegin(), 1); it != coords.cend(); it++) {
+	uint coordinate_index = 0;
+	for (list<Coordinate>::const_iterator it = next(coords.cbegin(), 1); it != coords.cend(); it++, coordinate_index++) {
 		for (uint i = 0; i < it->coor.size(); i++) {
 			if (i != mode && it->coor[i] != current_coordinates[i]) {
 				current_coordinates = it->coor;
-				fiber_indices.push_back(i);
+				fiber_indices.push_back(coordinate_index);
 			}
 
 		}
 	}
 	if (verbose) {
 		end = chrono::high_resolution_clock::now();
-		cout << "End: Detecting fiber indices" << endl << " [" << chrono::duration_cast<chrono::microseconds>(end - begin).count() << " ms]" << endl;
+		cout << "End: Detecting fiber indices" << " [" << chrono::duration_cast<chrono::microseconds>(end - begin).count() << " ms]" << endl;
 	}
 }
