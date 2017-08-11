@@ -57,7 +57,7 @@ private:
 	// Utilities
 	void createFibers(uint mode);
 	uint dot_product(const std::vector<uint> & u1, const std::vector<uint> & u2) const;
-	double std_dev(const std::list<uint> & numbers, uint x_bar) const;
+	double std_dev(const std::list<uint> & numbers, const double x_bar) const;
 };
 
 #endif

@@ -35,6 +35,11 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 		dimension--;
 
 	// 2 - Read the input stream
+	chrono::high_resolution_clock::time_point begin, end;
+	if (verbose) {
+		cout << "Start: read the tensor file" << endl;
+		begin = chrono::high_resolution_clock::now();
+	}
 	diagonal.resize(dimension, 0);
 	is.seekg(0);
 	while (!is.eof()) {
@@ -54,6 +59,12 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 		}
 		coords.push_back(Coordinate(current_coordinates));
 	  }
+
+	if (verbose) {
+		end = chrono::high_resolution_clock::now();
+		cout << "End: read the tensor file [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
+	}
+
 	cout << "Dimensions: ";
 	for (vector<uint>::const_iterator it = diagonal.cbegin(); it != diagonal.cend(); it++) {
 		cout << *it;
@@ -61,7 +72,7 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 			cout << "x";
 		}
 		}
-	cout << endl << "--------------------------------" << endl;
+	cout << endl;
 	
 	diagonal_self_dot_product = dot_product(diagonal, diagonal);
 }
@@ -69,7 +80,7 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 // CLASS Tmetrics | Public Member Function Definitions
 
 void Tmetrics::mode_dependent_metrics() {
-	cout << "------Mode Dependent Metrics ------" << endl
+	cout << "--------- Mode Dependent Metrics ---------" << endl
 		 << "<avg. fiber bandwidth> <avg. fiber density> <std. dev. of fiber occupation>" << endl;
 	for (uint i = 0; i < diagonal.size(); i++) {
 		ModeDependentMetrics metrics = fiber_metrics(i);
@@ -78,6 +89,11 @@ void Tmetrics::mode_dependent_metrics() {
 }
 
 void Tmetrics::mode_independent_metrics() {
+	// Calculation of mode independent metrics are done locally
+	// Computed metrics are: avg. distance to super diagonal, 
+	// avg. normalized pairwise coordinate difference,
+	// avg. pairwise coordinate differenceo
+	cout << "-------- Mode Independent Metrics --------" << endl;
 	chrono::high_resolution_clock::time_point begin, end;
 	if (verbose) {
 		cout << "Start: computation of mode independent metrics" << endl;
@@ -215,7 +231,7 @@ bool Tmetrics::Comparator::operator() (const Coordinate & lhs, const Coordinate 
 }
 
 void Tmetrics::createFibers(uint mode) {
-	// 0 - Sort the coordinates according to the current mode
+	// 0 - Sort the coordinates WRT to the current mode
 	chrono::high_resolution_clock::time_point begin, end;
 	if (verbose) {
 		cout << "Start: Sorting coordinates WRT mode " << mode << endl;
@@ -262,7 +278,7 @@ uint Tmetrics::dot_product(const vector<uint> & u1, const vector<uint> & u2) con
 	return result;
 }
 
-double Tmetrics::std_dev(const list<uint> & numbers, const uint x_bar) const {
+double Tmetrics::std_dev(const list<uint> & numbers, const double x_bar) const {
 	double nominator_sum = 0;
 	for (list<uint>::const_iterator it = numbers.cbegin(); it != numbers.cend(); it++) {
 		nominator_sum += (*it - x_bar) * (*it - x_bar);

@@ -18,6 +18,13 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="TensorMetrics\main.cpp" />
+    <ClCompile Include="TensorMetrics\tmetrics.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="TensorMetrics\tmetrics.hpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
