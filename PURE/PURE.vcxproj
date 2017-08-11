@@ -18,13 +18,6 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="NewMetrics\main.cpp" />
-    <ClCompile Include="NewMetrics\tmetrics.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="NewMetrics\tmetrics.hpp" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

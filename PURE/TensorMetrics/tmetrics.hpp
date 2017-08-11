@@ -10,11 +10,19 @@
 
 typedef unsigned int uint;
 
+struct ModeDependentMetrics {
+	ModeDependentMetrics(double bandwidth, double density, double dev)
+		: fiber_bandwidth(bandwidth), fiber_density(density), std_dev(dev) { }
+	double fiber_bandwidth;
+	double fiber_density;
+	double std_dev;
+};
+
 class Tmetrics {
 public:
 	Tmetrics(const std::string & in_file, bool no_values = false, bool verbose = false);
 
-	void mode_dependent_metrics(); // ALL fiber bandwidth | fiber density metrics for all modes
+	void mode_dependent_metrics(); // ALL fiber bandwidth | fiber density metrics for all modes | fiber occupation std. dev.
 	void mode_independent_metrics(); // For all NNZ, avg. distance to diag. | pairwise diff. avg | normalized pairwise diff.
 private:
 	struct Coordinate {
@@ -40,7 +48,7 @@ private:
 	double diagonal_self_dot_product;
 
 	// Mode dependent metrics
-	std::pair<double, double> fiber_metrics(uint mode); // for one fiber, returns the avg. fiber bandwidth & density
+	ModeDependentMetrics fiber_metrics(uint mode); // for one fiber, returns the avg. fiber bandwidth & density
 
 	// Mode independent metrics
 	std::pair<uint, double> pairwise_difference(const std::list<Coordinate>::const_iterator &) const; // for a given coordinate, returns the max pairwise difference
@@ -49,6 +57,7 @@ private:
 	// Utilities
 	void createFibers(uint mode);
 	uint dot_product(const std::vector<uint> & u1, const std::vector<uint> & u2) const;
+	double std_dev(const std::list<uint> & numbers, uint x_bar) const;
 };
 
 #endif

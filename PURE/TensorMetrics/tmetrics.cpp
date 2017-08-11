@@ -70,10 +70,10 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 
 void Tmetrics::mode_dependent_metrics() {
 	cout << "------Mode Dependent Metrics ------" << endl
-		 << "<avg. fiber bandwidth> <avg. fiber density>" << endl;
+		 << "<avg. fiber bandwidth> <avg. fiber density> <std. dev. of fiber occupation>" << endl;
 	for (uint i = 0; i < diagonal.size(); i++) {
-		pair<double, double> metrics = fiber_metrics(i);
-		cout << endl << "mode_" + to_string(i)  << ": " << metrics.first << " " << metrics.second << endl << endl;
+		ModeDependentMetrics metrics = fiber_metrics(i);
+		cout << endl << "mode " + to_string(i)  << ": " << metrics.fiber_bandwidth << " " << metrics.fiber_density << " " << metrics.std_dev << endl << endl;
 	}
 }
 
@@ -104,7 +104,7 @@ void Tmetrics::mode_independent_metrics() {
 
 // CLASS Tmetrics | Private Member Function Definitions
 
-pair<double, double> Tmetrics::fiber_metrics(uint mode) {
+ModeDependentMetrics Tmetrics::fiber_metrics(uint mode) {
 	chrono::high_resolution_clock::time_point begin, end;
 
 	// 0 - Create fibers
@@ -116,9 +116,12 @@ pair<double, double> Tmetrics::fiber_metrics(uint mode) {
 	double density_sum = 0;
 
 	if (verbose) {
-		cout << "Start: Fiber bandwidth & density computation" << endl;
+		cout << "Start: Fiber bandwidth, density & std dev computation" << endl;
 		begin = chrono::high_resolution_clock::now();
 	}
+
+	list<uint> nnz_counts;
+	long float nnz_count_sum = 0;
 
 	list<Coordinate>::const_iterator it = coords.cbegin();
 	uint iterator_position = 0;
@@ -138,13 +141,19 @@ pair<double, double> Tmetrics::fiber_metrics(uint mode) {
 		const int bandwidth = high_bound - low_bound; // Bandwidth of one fiber in the mode
 		bandwidth_sum += bandwidth;
 		density_sum += static_cast<double>(bandwidth) / nnz_count;
+
+		nnz_counts.push_back(nnz_count);
+		nnz_count_sum += nnz_count;
 	}
 
 	if (verbose) {
 		end = chrono::high_resolution_clock::now();
-		cout << "End: Fiber bandwidth & density computation [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
+		cout << "End: Fiber bandwidth, density & std dev computation [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 	}
-	return{ bandwidth_sum / fiber_count, density_sum / fiber_count };
+
+	ModeDependentMetrics metrics((bandwidth_sum / fiber_count), (density_sum / fiber_count), std_dev(nnz_counts, nnz_count_sum / fiber_count));
+
+	return metrics;
 }
 
 double Tmetrics::distance_to_diagonal(const list<Coordinate>::const_iterator & coord_iter) const {
@@ -240,6 +249,8 @@ void Tmetrics::createFibers(uint mode) {
 	}
 }
 
+// Mark: Class Tmetrics | Utilities
+
 uint Tmetrics::dot_product(const vector<uint> & u1, const vector<uint> & u2) const {
 	assert(u1.size() == u2.size());
 
@@ -249,4 +260,12 @@ uint Tmetrics::dot_product(const vector<uint> & u1, const vector<uint> & u2) con
 		result += u1[i] * u2[i];
 	}
 	return result;
+}
+
+double Tmetrics::std_dev(const list<uint> & numbers, const uint x_bar) const {
+	double nominator_sum = 0;
+	for (list<uint>::const_iterator it = numbers.cbegin(); it != numbers.cend(); it++) {
+		nominator_sum += (*it - x_bar) * (*it - x_bar);
+	}
+	return sqrt(nominator_sum / numbers.size());
 }
