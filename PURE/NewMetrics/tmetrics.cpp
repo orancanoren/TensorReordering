@@ -40,8 +40,11 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 	while (!is.eof()) {
 		vector<uint> current_coordinates(dimension);
 		for (int i = 0; i < dimension; i++) {
+		  if (is.eof()) break;
 			uint component;
 			is >> component;
+			if (is.fail()) break;
+
 			current_coordinates[i] = component;
 			diagonal[i] = diagonal[i] > component ? diagonal[i] : component;
 		}
@@ -50,14 +53,14 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 			is >> value;
 		}
 		coords.push_back(Coordinate(current_coordinates));
-	}
+	  }
 	cout << "Dimensions: ";
 	for (vector<uint>::const_iterator it = diagonal.cbegin(); it != diagonal.cend(); it++) {
 		cout << *it;
 		if (next(it, 1) != diagonal.end()) {
 			cout << "x";
 		}
-	}
+		}
 	cout << endl << "--------------------------------" << endl;
 	
 	diagonal_self_dot_product = dot_product(diagonal, diagonal);
