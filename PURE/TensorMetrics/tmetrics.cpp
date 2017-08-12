@@ -100,22 +100,22 @@ void Tmetrics::mode_independent_metrics() const {
 		begin = chrono::high_resolution_clock::now();
 	}
 
-	double distance_sum = 0;
-	pair<uint, double> pairwise_metrics_sum = { 0, 0 };
+	double distance_average = 0.0;
+	pair<double, double> pairwise_metrics_sum = { 0.0, 0.0 };
 	for (list<Coordinate>::const_iterator coordinate = coords.cbegin(); coordinate != coords.cend(); coordinate++) {
-		distance_sum += distance_to_diagonal(coordinate);
+		distance_average += distance_to_diagonal(coordinate) / coords.size();
 		pair<uint, double> pairwise_metrics = pairwise_difference(coordinate);
-		pairwise_metrics_sum.first += pairwise_metrics.first;
-		pairwise_metrics_sum.second += pairwise_metrics.second;
+		pairwise_metrics_sum.first += pairwise_metrics.first / coords.size();
+		pairwise_metrics_sum.second += pairwise_metrics.second / coords.size();
 	}
 
 	if (verbose) {
 		end = chrono::high_resolution_clock::now();
 		cout << "End: computation of mode independent metrics [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 	}
-	cout << "average distance to diagonal: " << distance_sum / coords.size() << endl
-		<< "average normalized pairwise difference: " << pairwise_metrics_sum.second / coords.size() << endl
-		<< "average pairwise difference: " << static_cast<double>(pairwise_metrics_sum.first) / coords.size() << endl;
+	cout << "average distance to diagonal: " << distance_average << endl
+		<< "average normalized pairwise difference: " << pairwise_metrics_sum.second << endl
+		<< "average pairwise difference: " << pairwise_metrics_sum.first << endl;
 }
 
 // CLASS Tmetrics | Private Member Function Definitions
@@ -133,7 +133,7 @@ ModeDependentMetrics Tmetrics::fiber_metrics(uint mode) {
 	double average_density = 0;
 
 	if (verbose) {
-		cout << "Start: Fiber bandwidth, density & std dev computation" << endl;
+		cout << "Start: Fiber bandwidth & density computation" << endl;
 		begin = chrono::high_resolution_clock::now();
 	}
 
@@ -158,7 +158,7 @@ ModeDependentMetrics Tmetrics::fiber_metrics(uint mode) {
 
 	if (verbose) {
 		end = chrono::high_resolution_clock::now();
-		cout << "End: Fiber bandwidth, density & std dev computation [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
+		cout << "End: Fiber bandwidth & density computation [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 	}
 
 	ModeDependentMetrics metrics(average_bandwidth, average_density);
