@@ -54,7 +54,7 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 			diagonal[i] = diagonal[i] > component ? diagonal[i] : component;
 		}
 		if (!no_values) {
-			float value;
+			double value;
 			is >> value;
 		}
 		coords.push_back(Coordinate(current_coordinates));
@@ -81,14 +81,14 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 
 void Tmetrics::mode_dependent_metrics() {
 	cout << "--------- Mode Dependent Metrics ---------" << endl
-		 << "<avg. fiber bandwidth> <avg. fiber density> <std. dev. of fiber occupation>" << endl;
+		 << "<avg. fiber bandwidth> <avg. fiber density>" << endl;
 	for (uint i = 0; i < diagonal.size(); i++) {
 		ModeDependentMetrics metrics = fiber_metrics(i);
-		cout << endl << "mode " + to_string(i)  << ": " << metrics.fiber_bandwidth << " " << metrics.fiber_density << " " << metrics.std_dev << endl << endl;
+		cout << endl << "mode " + to_string(i)  << ": " << metrics.fiber_bandwidth << " " << metrics.fiber_density << endl << endl;
 	}
 }
 
-void Tmetrics::mode_independent_metrics() {
+void Tmetrics::mode_independent_metrics() const {
 	// Calculation of mode independent metrics are done locally
 	// Computed metrics are: avg. distance to super diagonal, 
 	// avg. normalized pairwise coordinate difference,
@@ -125,25 +125,22 @@ ModeDependentMetrics Tmetrics::fiber_metrics(uint mode) {
 
 	// 0 - Create fibers
 	createFibers(mode);
+	fiber_count = fiber_indices.size() - 1;
 
 	// 1 - For each fiber, compute the bandwidth
 	// [for now] -> compute the average FB of the current mode
-	double bandwidth_sum = 0;
-	double density_sum = 0;
+	double average_bandwidth= 0;
+	double average_density = 0;
 
 	if (verbose) {
 		cout << "Start: Fiber bandwidth, density & std dev computation" << endl;
 		begin = chrono::high_resolution_clock::now();
 	}
 
-	list<uint> nnz_counts;
-	long float nnz_count_sum = 0;
-
 	list<Coordinate>::const_iterator it = coords.cbegin();
 	uint iterator_position = 0;
-	long fiber_count = 0;
 	// traversal over fiber indices
-	for (list<uint>::const_iterator index = fiber_indices.cbegin(); index != fiber_indices.cend(); index++, fiber_count++) {
+	for (list<uint>::const_iterator index = fiber_indices.cbegin(); index != fiber_indices.cend(); index++) {
 		uint low_bound = UINT_MAX, high_bound = 0;
 		uint nnz_count = 0;
 		// traversal over fiber coordinates
@@ -154,12 +151,9 @@ ModeDependentMetrics Tmetrics::fiber_metrics(uint mode) {
 			it++;
 			iterator_position++;
 		}
-		const int bandwidth = high_bound - low_bound; // Bandwidth of one fiber in the mode
-		bandwidth_sum += bandwidth;
-		density_sum += static_cast<double>(bandwidth) / nnz_count;
-
-		nnz_counts.push_back(nnz_count);
-		nnz_count_sum += nnz_count;
+		const double bandwidth = high_bound - low_bound + 1; // Bandwidth of one fiber in the mode
+		average_bandwidth += bandwidth / fiber_count;
+		average_density += (bandwidth / nnz_count) / fiber_count;
 	}
 
 	if (verbose) {
@@ -167,8 +161,7 @@ ModeDependentMetrics Tmetrics::fiber_metrics(uint mode) {
 		cout << "End: Fiber bandwidth, density & std dev computation [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 	}
 
-	ModeDependentMetrics metrics((bandwidth_sum / fiber_count), (density_sum / fiber_count), std_dev(nnz_counts, nnz_count_sum / fiber_count));
-
+	ModeDependentMetrics metrics(average_bandwidth, average_density);
 	return metrics;
 }
 
@@ -276,12 +269,4 @@ uint Tmetrics::dot_product(const vector<uint> & u1, const vector<uint> & u2) con
 		result += u1[i] * u2[i];
 	}
 	return result;
-}
-
-double Tmetrics::std_dev(const list<uint> & numbers, const double x_bar) const {
-	double nominator_sum = 0;
-	for (list<uint>::const_iterator it = numbers.cbegin(); it != numbers.cend(); it++) {
-		nominator_sum += (*it - x_bar) * (*it - x_bar);
-	}
-	return sqrt(nominator_sum / numbers.size());
 }
