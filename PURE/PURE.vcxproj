@@ -19,11 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TensorMetrics\main.cpp" />
-    <ClCompile Include="TensorMetrics\tmetrics.cpp" />
+    <ClCompile Include="ReorderTensor\convert.cpp" />
+    <ClCompile Include="ReorderTensor\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TensorMetrics\tmetrics.hpp" />
+    <ClInclude Include="ReorderTensor\convert.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>

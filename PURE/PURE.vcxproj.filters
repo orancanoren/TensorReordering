@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TensorMetrics\main.cpp">
+    <ClCompile Include="ReorderTensor\convert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TensorMetrics\tmetrics.cpp">
+    <ClCompile Include="ReorderTensor\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TensorMetrics\tmetrics.hpp">
+    <ClInclude Include="ReorderTensor\convert.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
