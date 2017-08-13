@@ -1,6 +1,7 @@
 #include <iostream>
 #include "convert.hpp"
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -46,9 +47,9 @@ int main(int argc, char * argv[]) {
 	}
 
 	string infile, outfile;
-	for (vector<string>::const_iterator it = arguments.cbegin() + 1; it != arguments.cend() && file == ""; it++) {
+	for (vector<string>::const_iterator it = arguments.cbegin() + 1; it != arguments.cend() && infile == ""; it++) {
 		if (it->at(0) != '-') {
-			file = *it;
+			infile = *it;
 		}
 		else if (it->substr(0, 3) == "-o=") {
 			outfile = it->substr(3);
