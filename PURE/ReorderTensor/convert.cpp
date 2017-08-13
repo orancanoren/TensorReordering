@@ -25,7 +25,7 @@ Convert::Convert(const string & tensor_file, bool verbose, string output_file)
 
 	ifstream is(tensor_file);
 	if (!is.is_open()) {
-		cout << "Cannot open the tensor file";
+		cout << "Cannot open the tensor file" << endl;
 		exit(1);
 	}
 
@@ -146,7 +146,7 @@ void Convert::write_graph() {
 	// <vertex 1> <vertex 2> <weight>
 	uint label_counter = 0;
 	for (vector<Vertex>::const_iterator it = vertices.begin(); it != vertices.cend(); it++, label_counter++) {
-		for (unordered_map< uint, uint >::const_iterator & neighbor = it->neighbors.cbegin(); neighbor != it->neighbors.cend(); neighbor++) {
+		for (unordered_map< uint, uint >::const_iterator neighbor = it->neighbors.cbegin(); neighbor != it->neighbors.cend(); neighbor++) {
 			os << label_counter + 1 << " " << neighbor->first + 1<< " " << neighbor->second << endl;
 		}
 	}
