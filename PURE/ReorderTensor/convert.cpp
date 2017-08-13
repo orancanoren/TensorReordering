@@ -177,7 +177,7 @@ void Convert::insertEdge(uint u1, uint u2) {
 	}
 
 	// 2 - If the edge exists, update the weights of appropriate edges
-	fixWeights(u2);
+	fixWeights(u1);
 }
 
 uint Convert::getMode(const uint vertex_id) const {
