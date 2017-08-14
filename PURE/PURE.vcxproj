@@ -19,11 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ReorderTensor\convert.cpp" />
-    <ClCompile Include="ReorderTensor\main.cpp" />
+    <ClCompile Include="TensorToGraph\convert.cpp" />
+    <ClCompile Include="TensorToGraph\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ReorderTensor\convert.hpp" />
+    <ClInclude Include="TensorToGraph\convert.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>

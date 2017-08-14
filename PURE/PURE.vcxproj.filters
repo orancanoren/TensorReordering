@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ReorderTensor\convert.cpp">
+    <ClCompile Include="TensorToGraph\convert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ReorderTensor\main.cpp">
+    <ClCompile Include="TensorToGraph\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ReorderTensor\convert.hpp">
+    <ClInclude Include="TensorToGraph\convert.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

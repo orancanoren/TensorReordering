@@ -10,12 +10,12 @@ void usage() {
 }
 
 void help() {
-	cout << "Tensor Ordering Metrics" << endl
+	cout << "" << endl
 		<< "-----------------------" << endl;
 	usage();
 	cout << "Avaiable options:" << endl
-		<< "\t-no_values \t\t tensor file does NOT contain values" << endl
-		<< "\t-v \t\t verbose, i.e. prints timing info" << endl;
+		<< "\t-o=FILE\t\t sets the name of the output file" << endl
+		<< "\t-v \t\t verbosee" << endl;
 }
 
 int main(int argc, char * argv[]) {
@@ -63,6 +63,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	Convert conv_obj(infile, verbose, outfile);
+	conv_obj.write_graph();
 
 	cout << "************************************" << endl;
 	return 0;

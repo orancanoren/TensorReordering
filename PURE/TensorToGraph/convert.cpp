@@ -142,6 +142,14 @@ void Convert::write_graph() {
 	// First line of output: <num vertex> <num vertex> <num edges>
 	os << vertices.size() << " " << vertices.size() << " " << num_edges << endl;
 
+	// 1 - Output the graph
+	// 1.1 - Output the header info
+	// <dimension 1 width> <dimension 2 width> ... <dim. n width>
+	for (vector<uint>::const_iterator width = super_diagonal.cbegin(); width != super_diagonal.cend(); width++) {
+		os << *width << " ";
+	}
+	os << endl;
+
 	// 1 - Output the graph in following format
 	// <vertex 1> <vertex 2> <weight>
 	uint label_counter = 0;
