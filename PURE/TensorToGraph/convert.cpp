@@ -110,9 +110,9 @@ void Convert::createGraph(ifstream & is) {
 		if (is.eof()) break;
 
 		for (uint i = 0; i < super_diagonal.size() - 1; i++) {
+			is >> cur;
 			if (is.eof()) break;
 
-			is >> cur;
 			cur = cur - 1 + super_diagonal[i];
 			insertEdge(prev, cur);
 			prev = cur;
@@ -172,7 +172,6 @@ void Convert::insertEdge(uint u1, uint u2) {
 	num_edges++;
 
 	unordered_map< uint, uint > & u1_neighbors = vertices[u1].neighbors;
-	unordered_map< uint, uint > & u2_neighbors = vertices[u2].neighbors;
 
 	// 1 - Search for the edge
 	unordered_map< uint, uint >::iterator edge = u1_neighbors.find(u2);
@@ -181,11 +180,10 @@ void Convert::insertEdge(uint u1, uint u2) {
 	if (edge == u1_neighbors.end()) {
 		u1_neighbors.insert({ u2, 1 });
 		vertices[u2].ancestors.push_back(u1);
-		return;
 	}
-
-	// 2 - If the edge exists, update the weights of appropriate edges
-	fixWeights(u1);
+	else { // 2 - If the edge exists, update the weights of appropriate edges
+		fixWeights(u2);
+	}
 }
 
 uint Convert::getMode(const uint vertex_id) const {
@@ -197,6 +195,10 @@ uint Convert::getMode(const uint vertex_id) const {
 }
 
 void Convert::fixWeights(const uint source) {
+
+#ifdef _DEBUG
+	cout << "fixWeights called for " << source << endl;
+#endif
 
 	if (vertices[source].ancestors.empty())
 		return;
