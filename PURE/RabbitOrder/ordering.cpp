@@ -9,6 +9,8 @@
 #include <queue>
 #include <limits.h>
 #include <chrono>
+#include <string>
+#include <sstream>
 
 #define __STDC_LIMIT_MACOS
 
@@ -16,171 +18,134 @@ using namespace std;
 
 // Class Ordering
 
-int Ordering::Vertex::labelCounter = 0;
+uint Ordering::Vertex::labelCounter = 0;
 
-Ordering::Ordering(int vertexCount, bool symmetric) : dendrogram(vertexCount), symmetric(symmetric) {
-#ifdef _DEBUG_HIGH
-	cout << "Ordering constructor invoked" << endl;
-#endif
-	vertices.resize(vertexCount);
-	new_id = vertexCount;
-	edgeCounter = 0;
-	edgeInserted = false;
-}
-
-Ordering::Ordering(ifstream & is, bool symmetric, bool valuesExist, bool zeroBased, bool writeGraph) 
+Ordering::Ordering(string filename, bool symmetric, bool zero_based, bool write_graph) 
 	: symmetric(symmetric), valuesExist(valuesExist), writeGraph(writeGraph)  {
-	// Input Format:
-	// * First line: <vertex count> <vertex count> <edge count>
-	// <vertex id> <vertex id> <weight>
-#ifdef _DEBUG_HIGH
-	cout << "Ordering constructor invoked" << endl;
-#endif
+	/* Input Format:
+	 * First line: <vertex count> <edge count>
+	 * For any line <i> of remaining lines:
+	 * <neighbor 1 of vertex <i>> <edge weight> <neighbor 2 of vertex<i>> <edge weight>
+	 */
+
+	chrono::high_resolution_clock::time_point begin, end;
+
+	// 1 - Create and read the input stream
+	ifstream is(filename);
 	if (!is.is_open()) throw InputFileErrorException();
+	cout << "Start: read the graph file" << endl;
 
-	cout << "Started taking inputs from stream" << endl;
-	auto begin = chrono::high_resolution_clock::now();
-	unsigned int vertexCount, edgeCount;
-	is >> vertexCount >> vertexCount >> edgeCount;
+	uint vertexCount, edgeCount;
+	begin = chrono::high_resolution_clock::now();
+	int header_end_indicator;
+
+	is >> vertexCount >> edgeCount >> header_end_indicator;
 	vertices.resize(vertexCount);
-
 	dendrogram = Dendrogram(vertexCount);
 
-	for (int i = 0; i < edgeCount; i++) {
-		if (valuesExist) {
-			int v1, v2, weight;
-			is >> v1 >> v2 >> weight;
-			if (is.fail()) {
+	for (uint current_vertex = 0; !is.eof(); current_vertex++) {
+		string line;
+		getline(is, line);
+
+		if (is.fail())
+			throw InvalidInputException();
+
+		// Parse the current line
+		istringstream iss(line);
+		while (!iss.eof()) {
+			uint neighbor, weight;
+			iss >> neighbor >> weight;
+
+			if (iss.fail())
 				throw InvalidInputException();
-			}
-			
-			if (!zeroBased) {
-				v1 -= 1;
-				v2 -= 1;
-			}
-			insertEdge(v1, v2);
-			if (symmetric) {
-				insertEdge(v2, v1);
-			}
-		}
-		else {
-			int v1, v2;
-			is >> v1 >> v2;
-			if (is.fail()) {
-				throw InvalidInputException();
+
+			if (zero_based) {
+				neighbor -= 1;
 			}
 
-			if (!zeroBased) {
-				v1 -= 1;
-				v2 -= 1;
-			}
-			insertEdge(v1, v2);
+			insertEdge(current_vertex, neighbor, weight);
 			if (symmetric) {
-				insertEdge(v2, v1);
+				insertEdge(neighbor, current_vertex, weight);
 			}
 		}
 	}
+
+	// 2 - Set the values of member variables according to the read data
 	new_id = vertexCount;
 	edgeCounter = edgeCount;
-	if (!symmetric) {
-		edgeCounter /= 2;
-	}
-	auto end = chrono::high_resolution_clock::now();
-	cout << "Input has been processed in " << 
-		chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
-#ifdef _DEBUG_HIGH
-	cout << "Graph has been read successfully" << endl;
-#endif
-}
 
-Ordering::~Ordering() {
-#ifdef _DEBUG_HIGH
-	cout << "Ordering destructor invoked" << endl;
-#endif
+	end = chrono::high_resolution_clock::now();
+	cout << "End: read the graph file [" << 
+		chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 }
 
 // Class Ordering | Public Member Function Definitions
 
-void Ordering::insertEdge(int from, int to, int value) {
-#ifdef _DEBUG_HIGH
-	cout << "Ordering::insertEdge() invoked" << endl;
-#endif
-	if (from >= vertices.size() || from < 0) throw NotFoundException(VERTEX_NOT_FOUND);
+void Ordering::insertEdge(uint from, uint to, uint value) {
+	// 0 - Ensure that <from> exists among the vertices
+	if (from >= vertices.size() || from < 0) 
+		throw NotFoundException(VERTEX_NOT_FOUND);
 
 	vertices[from].edges.insert({ to, value });
-	if (symmetric) {
-		vertices[to].edges.insert({ from, value });
-	}
-	if (!symmetric) {
-		if (edgeInserted) {
-			edgeInserted = false;
-		}
-		else {
-			edgeCounter++;
-		}
-	}
-	else {
-		edgeCounter++;
-	}
 }
 
-void Ordering::rabbitOrder(ofstream & os) {
+void Ordering::rabbitOrder(const string output_filename) {
 	// 0 - Copy the graph [if necessary]
 	chrono::high_resolution_clock::time_point begin, end;
 	vector<Vertex> original_graph;
 	if (writeGraph) {
-		cout << "Creating a copy of the original graph" << endl;
+		cout << "Start: prepare a copy of the original graph" << endl;
 		begin = chrono::high_resolution_clock::now();
 		original_graph = vertices;
 		end = chrono::high_resolution_clock::now();
-		cout << "Graph has been copied in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
+		cout << "End: prepare a copy of the original graph [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 	}
 
 	// 1 - Community Detection
-	cout << "Starting community detection" << endl;
+	cout << "Start: community detection" << endl;
 	begin = chrono::high_resolution_clock::now();
 	community_detection();
 	end = chrono::high_resolution_clock::now();
-	cout << "Community detection has been completed in " << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
+	cout << "End: community detection [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 
 	// 2- Ordering Generation
-	cout << "Starting ordering generation" << endl;
+	cout << "Start: ordering generation" << endl;
 	begin = chrono::high_resolution_clock::now();
 	new_labels = *ordering_generation(); // memory leak
 	end = chrono::high_resolution_clock::now();
-	cout << "Ordering Generation has been completed in "
-		<< chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms" << endl;
 
-	for (vector<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++) {
+	cout << "End: ordering generation ["
+		<< chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl
+		<< "Start: write the permutation file" << endl;
+
+	// 3 - Write output
+	ofstream os(output_filename);
+	begin = chrono::high_resolution_clock::now();
+	for (vector<uint>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++) {
 	  os << *it << " ";
 	}
+	end = chrono::high_resolution_clock::now();
 	os.close();
-	cout << "New permutations has been saved to file" << endl;
+
+	cout << "End: write the permutation file [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 
 	if (!writeGraph)
 		return;
 
-	cout << "Creating re-ordered graph file" << endl;
-	begin = chrono::high_resolution_clock::now();
-	int old_label = 0;
-	for (vector<int>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++, old_label++) {
-		Vertex & currentVertex = vertices[old_label];
-		currentVertex.label = *it;/*
-		for (unordered_map<int, int>::iterator edge = currentVertex.edges.begin(); edge != currentVertex.edges.end(); edge++) {
-			Vertex & neighbor = vertices[edge->first];
-			unordered_map<int, int>::iterator neighbor_edge = neighbor.edges.find(old_label);
-			assert(neighbor_edge != neighbor.edges.end());
+	// Outputs asymmetrical graph (i.e. outputs all edges of the graph)
 
-			int weight = neighbor_edge->second;
-			neighbor.edges.erase(neighbor_edge);
-			neighbor.edges.insert({ *it, weight });
-		}*/
+	cout << "Start: write the reordered graph" << endl;
+	begin = chrono::high_resolution_clock::now();
+	uint old_label = 0;
+	for (vector<uint>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++, old_label++) {
+		Vertex & currentVertex = vertices[old_label];
+		currentVertex.label = *it;
 	}
+	cout << "End: write the reordered graph" << endl;
 
 	ofstream orderedStream("ordered_graph.txt");
-	orderedStream << "% Asymmetrical Reordered Graph" << endl;
 	for (vector<Vertex>::const_iterator it = vertices.begin(); it != vertices.end(); it++) {
-		for (unordered_map<int, int>::const_iterator edge = it->edges.begin(); edge != it->edges.end(); edge++) {
+		for (unordered_map<uint, uint>::const_iterator edge = it->edges.begin(); edge != it->edges.end(); edge++) {
 			orderedStream << it->label << " " << vertices[edge->first].label << " " << edge->second << endl;
 		}
 	}
@@ -191,28 +156,26 @@ void Ordering::rabbitOrder(ofstream & os) {
 
 // Class Ordering | Private Member Function Definitions
 
-void Ordering::mergeVertices(int u, int v) {
+void Ordering::mergeVertices(uint u, uint v) {
 	// Pre-condition: u and v are neighbors OR u and v are the identical
 	// Post-condition: vertex <v> is merged into <u>
-#ifdef _DEBUG_HIGH
-	cout << "Ordering::mergeVertices() invoked" << endl;
-#endif
+
 	// 0 - If <u> and <v> are identical, no merge operation will be performed
 	if (u == v) return;
 
 	// 1 - Relable the vertex that's being merged on to ( <v> --> <v'> )
 	vertices[v].label = new_id++;
 
-	unordered_map<int, int> & u_edges = vertices[u].edges, &v_edges = vertices[v].edges;
+	unordered_map<uint, uint> & u_edges = vertices[u].edges, &v_edges = vertices[v].edges;
 	// 2 - Reconnect edges connected to <u>, to <v'>
-	for (unordered_map<int, int>::iterator it = u_edges.begin(); it != u_edges.end(); it++) {
+	for (unordered_map<uint, uint>::iterator it = u_edges.begin(); it != u_edges.end(); it++) {
 		int neighbor_id = it->first;
 		if (neighbor_id == v || neighbor_id == u) {
 			continue;
 		}
 
-		unordered_map<int, int> & neighbor_edges = vertices[neighbor_id].edges;
-		unordered_map<int, int>::iterator findResult = neighbor_edges.find(u);
+		unordered_map<uint, uint> & neighbor_edges = vertices[neighbor_id].edges;
+		unordered_map<uint, uint>::iterator findResult = neighbor_edges.find(u);
 		assert(findResult != neighbor_edges.end());
 		int edgeWeight = findResult->second;
 		neighbor_edges.erase(findResult); // 2.1 - erase the edge connecting the current neighbor to <u>
@@ -230,7 +193,7 @@ void Ordering::mergeVertices(int u, int v) {
 	}
 
 	// 3 - Build the self-loop on <v'>
-	unordered_map<int, int>::iterator v_u_edge = v_edges.find(u), v_v_edge = v_edges.find(v), u_u_edge = u_edges.find(u);
+	unordered_map<uint, uint>::iterator v_u_edge = v_edges.find(u), v_v_edge = v_edges.find(v), u_u_edge = u_edges.find(u);
 	assert(v_u_edge != v_edges.end());
 	int loopWeight = 2 * (v_u_edge->second);
 	loopWeight += (v_v_edge == v_edges.end() ? 0 : v_v_edge->second);
@@ -252,9 +215,9 @@ void Ordering::community_detection() {
 	// we'll use <originalArray> to revert back to the original array we had
 
 	// 1 - Set all the edge weights to 1
-	for (int i = 0; i < vertices.size(); i++) {
-		unordered_map<int, int> & edges = vertices[i].edges;
-		for (unordered_map<int, int>::iterator it = edges.begin(); it != edges.end(); it++) {
+	for (uint i = 0; i < vertices.size(); i++) {
+		unordered_map<uint, uint> & edges = vertices[i].edges;
+		for (unordered_map<uint, uint>::iterator it = edges.begin(); it != edges.end(); it++) {
 			it->second = 1;
 		}
 	}
@@ -266,9 +229,9 @@ void Ordering::community_detection() {
 			continue;
 		}
 
-		std::pair<int, double> maxModularityNeighbor = { INT_MIN, INT_MIN }; // < vertex_label, modularity >
-		unordered_map<int, int> & edges = currentVertex.edges;
-		for (unordered_map<int, int>::const_iterator edge = edges.begin(); edge != edges.end(); edge++) {
+		std::pair<uint, double> maxModularityNeighbor = { INT_MIN, INT_MIN }; // < vertex_label, modularity >
+		unordered_map<uint, uint> & edges = currentVertex.edges;
+		for (unordered_map<uint, uint>::const_iterator edge = edges.begin(); edge != edges.end(); edge++) {
 			int neighborLabel = edge->first;
 			if (vertices[neighborLabel].label == currentVertex.label) {
 				continue;
@@ -290,25 +253,25 @@ void Ordering::community_detection() {
 	vertices = originalArray;
 }
 
-const vector<int> * Ordering::ordering_generation() {
+const vector<uint> * Ordering::ordering_generation() {
 	return dendrogram.DFS();
 }
 
-double Ordering::modularity(int u, int v) {
-	unordered_map<int, int>::iterator edge = vertices[u].edges.find(v);
+double Ordering::modularity(uint u, uint v) {
+	unordered_map<uint, uint>::iterator edge = vertices[u].edges.find(v);
 	assert(edge != vertices[u].edges.end());
 
 	double m = edgeCounter;
 	double weighted_degree_u = 0.0;
 	double weighted_degree_v = 0.0;
 
-	for (unordered_map<int, int>::iterator u_edge = vertices[u].edges.begin(); u_edge != vertices[u].edges.end(); u_edge++) {
+	for (unordered_map<uint, uint>::iterator u_edge = vertices[u].edges.begin(); u_edge != vertices[u].edges.end(); u_edge++) {
 		weighted_degree_u += u_edge->second;
 	}
-	for (unordered_map<int, int>::iterator v_edge = vertices[v].edges.begin(); v_edge != vertices[v].edges.end(); v_edge++) {
+	for (unordered_map<uint, uint>::iterator v_edge = vertices[v].edges.begin(); v_edge != vertices[v].edges.end(); v_edge++) {
 		weighted_degree_v += v_edge->second;
 	}
 
-	double modularity = (((double)edge->second / (2.0 * m)) - (weighted_degree_u * weighted_degree_v / ((2.0 * m) * (2.0 * m))));
+	double modularity = ((static_cast<double>(edge->second) / (2.0 * m)) - (weighted_degree_u * weighted_degree_v / ((2.0 * m) * (2.0 * m))));
 	return modularity;
 }

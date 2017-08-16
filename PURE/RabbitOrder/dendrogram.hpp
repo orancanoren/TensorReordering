@@ -5,19 +5,20 @@
 #include <list>
 #include <set>
 
+typedef unsigned int uint;
+
 class Dendrogram {
 public:
 	Dendrogram();
-	Dendrogram(int nodeCount);
-	~Dendrogram();
+	Dendrogram(uint nodeCount);
 
-	void connect(int u, int v);
-	std::vector<int> * DFS();
+	void connect(uint u, uint v);
+	std::vector<uint> * DFS();
 	// Returns DFS order for each community in a vector,
 	// arr[i] contains the new label for i'th vertex
 private:
 	struct Vertex {
-		Vertex(int label)
+		Vertex(uint label)
 			: label(label), hasParent(false), visited(false), hasChildren(false) { }
 		int label;
 		// In a dendrogram, a vertex is allowed to
@@ -34,8 +35,8 @@ private:
 	};
 
 	std::list<Vertex> vertices;
-	int nodeCount;
-	int new_id;
+	uint nodeCount;
+	uint new_id;
 };
 
 #endif

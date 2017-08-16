@@ -6,11 +6,8 @@
 #include <stack>
 using namespace std;
 
-Dendrogram::Dendrogram(int nodeCount) : nodeCount(nodeCount) {
-#ifdef _DEBUG_HIGH
-	cout << "Dendrogram constructor invoked" << endl;
-#endif
-	for (int i = 0; i < nodeCount; i++) {
+Dendrogram::Dendrogram(uint nodeCount) : nodeCount(nodeCount) {
+	for (uint i = 0; i < nodeCount; i++) {
 		vertices.push_back(Vertex(i));
 	}
 	new_id = nodeCount;
@@ -18,24 +15,12 @@ Dendrogram::Dendrogram(int nodeCount) : nodeCount(nodeCount) {
 
 Dendrogram::Dendrogram() {
 	// Creates an empty dendrogram with no vertices [should be used for initializing only!]
-#ifdef _DEBUG_HIGH
-	cout << "Dendrogram constructor invoked" << endl;
-#endif
 	new_id = nodeCount;
-}
-
-Dendrogram::~Dendrogram() {
-#ifdef _DEBUG_HIGH
-	cout << "Dendrogram destructor invoked" << endl;
-#endif
 }
 
 // Class Dendrogram | Public Member Function Definitions
 
-vector<int> * Dendrogram::DFS() {
-#ifdef _DEBUG_HIGH
-	cout << "Dendrogram::DFS() invoked" << endl;
-#endif
+vector<uint> * Dendrogram::DFS() {
 	// The returned vector contains the old label for the new label i at position i
 
 	// 1 - keep a list of vertices with no parent (community roots)
@@ -47,7 +32,7 @@ vector<int> * Dendrogram::DFS() {
 	}
 
 	// 2 - while the list is not empty, get one community root and perform DFS starting from it
-	vector<int> * DFSorder = new vector<int>(nodeCount);
+	vector<uint> * DFSorder = new vector<uint>(nodeCount);
 	int labelIncrement = 0;
 	while (!communities.empty()) {
 		list<Vertex>::iterator current_community = communities.top();
@@ -79,7 +64,7 @@ vector<int> * Dendrogram::DFS() {
 	return DFSorder;
 }
 
-void Dendrogram::connect(int u, int v) {
+void Dendrogram::connect(uint u, uint v) {
 	// Precondition: <u> and <v> exist in the dendrogram && <u> and <v> are distinct vertices
 	Vertex newVertex = Vertex(new_id++);
 

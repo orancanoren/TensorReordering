@@ -4,47 +4,48 @@
 #include <vector>
 #include <exception>
 #include <unordered_map>
-#include <fstream>
 #include "dendrogram.hpp"
+
+typedef unsigned int uint;
 
 class Ordering {
 public:
-	Ordering(int vertexCount, bool symmetric = true);
-	Ordering(std::ifstream & is, bool symmetric = true, bool valuesExist = true, bool zeroBased = true, bool writeGraph = false); // Reads MatrixMarket graph
-	~Ordering();
+	Ordering(std::string filename, bool symmetric = true,
+		bool zeroBased = true, bool writeGraph = false); // Reads adjacency list graph with header info
 
-	void insertEdge(int from, int to, int value = 1);
-	void rabbitOrder(std::ofstream & os);
+	void insertEdge(uint from, uint to, uint value);
+	void rabbitOrder(const std::string output_filename);
 private:
 	struct Vertex {
 		Vertex() : label(labelCounter++), merged(false) { }
-		// keep a hashtable of edges
-		std::unordered_map<int, int> edges;
-		int label;
-		static int labelCounter; // will be used to give out labels
+
+		std::unordered_map<uint, uint> edges; // < neighbor label, edge weight >
+		static uint labelCounter; // will be used to give out labels
 		bool merged;
+		uint label;
 
 		bool operator < (const Vertex & rhs) const {
 			return this->edges.size() < rhs.edges.size();
 		}
 	};
 
-	void mergeVertices(int u, int v);
-	void community_detection();
-
-	const std::vector<int> * ordering_generation();
-	double modularity(int u, int v);
-
-	int new_id;
-	unsigned int edgeCounter;
+	// Member variables
+	uint new_id;
+	uint edgeCounter;
 	bool symmetric;
-	bool edgeInserted;
 	bool valuesExist;
 	bool writeGraph;
-
 	std::vector<Vertex> vertices;
-	std::vector<int> new_labels;
+	std::vector<uint> new_labels;
 	Dendrogram dendrogram;
+
+	// Sub-Algorithms
+	void mergeVertices(uint u, uint v);
+	const std::vector<uint> * ordering_generation();
+
+	// Utilities
+	double modularity(uint u, uint v);
+	void community_detection();
 };
 
 // =======================

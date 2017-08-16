@@ -1,7 +1,6 @@
 #include "ordering.hpp"
 #include <iostream>
 #include <string>
-#include <fstream>
 #include <algorithm>
 
 using namespace std;
@@ -11,7 +10,6 @@ void help() {
 		<< "----------------------------------------------------" << endl
 		<< "Available options:" << endl << endl
 		<< "\t-zero_based \t\t vertices are labeled zero based" << endl
-		<< "\t-weighted \t\t creates a weighted graph" << endl
 		<< "\t-symmetric \t\t for the edge (u, v) the file doesn't contain (v, u)" << endl
 		<< "\t-o=FILE_NAME \t\t name of the output file" << endl
 		<< "\t-write_graph \t\t writes the re-ordered graph in MatrixMarket format" << endl;
@@ -26,11 +24,6 @@ int main(int argc, char * argv[]) {
 
 	bool valuesExist = false, symmetric = false, oneBased = true, writeGraph = false;
 	string input_filename, output_filename = "rabbit_permutation.txt";
-
-	if (find(begin(arguments), end(arguments), "-weighted") != end(arguments)) {
-		valuesExist = true;
-		cout << "Values exist in the data" << endl;
-	}
 
 	if (find(begin(arguments), end(arguments), "-symmetric") != end(arguments)) {
 		symmetric = true;
@@ -66,11 +59,8 @@ int main(int argc, char * argv[]) {
 	}
 	try {
 
-		ofstream os(output_filename);
-		ifstream is(input_filename);
-
-		Ordering graph(is, symmetric, valuesExist, !oneBased, writeGraph);
-		graph.rabbitOrder(os);
+		Ordering graph(input_filename, symmetric, !oneBased, writeGraph);
+		graph.rabbitOrder(output_filename);
 	}
 	catch (GraphException & exc) {
 		cout << "Error occured:" << endl

@@ -42,7 +42,9 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 	}
 	diagonal.resize(dimension, 0);
 	is.seekg(0);
+	uint line_count = 0;
 	while (!is.eof()) {
+		line_count++;
 		vector<uint> current_coordinates(dimension);
 		for (int i = 0; i < dimension; i++) {
 		  if (is.eof()) break;
@@ -58,8 +60,8 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 			is >> value;
 		}
 		coords.push_back(Coordinate(current_coordinates));
-	  }
-
+	}
+	cout << "line count: " << line_count << endl;
 	if (verbose) {
 		end = chrono::high_resolution_clock::now();
 		cout << "End: read the tensor file [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
@@ -140,6 +142,7 @@ ModeDependentMetrics Tmetrics::fiber_metrics(uint mode) {
 	list<Coordinate>::const_iterator it = coords.cbegin();
 	uint iterator_position = 0;
 	// traversal over fiber indices
+	uint total_nnz_count = 0;
 	for (list<uint>::const_iterator index = fiber_indices.cbegin(); index != fiber_indices.cend(); index++) {
 		uint low_bound = UINT_MAX, high_bound = 0;
 		uint nnz_count = 0;
@@ -153,9 +156,11 @@ ModeDependentMetrics Tmetrics::fiber_metrics(uint mode) {
 		}
 		const double bandwidth = high_bound - low_bound + 1; // Bandwidth of one fiber in the mode
 		average_bandwidth += bandwidth / fiber_count;
+		//cout << "fiber count: " << fiber_count << endl;
 		average_density += (bandwidth / nnz_count) / fiber_count;
+		total_nnz_count += nnz_count;
 	}
-
+	cout << total_nnz_count << endl;
 	if (verbose) {
 		end = chrono::high_resolution_clock::now();
 		cout << "End: Fiber bandwidth & density computation [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;

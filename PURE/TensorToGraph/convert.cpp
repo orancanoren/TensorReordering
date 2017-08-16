@@ -70,7 +70,7 @@ void Convert::processCoordinates() {
 
 		for (uint mode = 0; mode < super_diagonal.size(); mode++) {
 			// For one mode, enumerate all permutations of size 2 and insert them to the htable of appropriate mode
-			for (uint i = 0; i < current_coordinates.size() - 1; i++) {
+			for (uint i = 0; i < current_coordinates.size(); i++) {
 				if (i == mode) continue;
 
 				uint label_1 = current_coordinates[mode] + (mode == 0 ? 0 : super_diagonal[mode - 1]);
