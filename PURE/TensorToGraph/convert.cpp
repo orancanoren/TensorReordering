@@ -1,214 +1,121 @@
 #include "convert.hpp"
-#include <algorithm>
-#include <fstream>
+#include <vector>
+#include <list>
 #include <string>
-#include <iostream>
 #include <chrono>
-#include <iterator>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
 #include <unordered_map>
-#include <cassert>
+#include <sstream>
 
 using namespace std;
 
-Convert::Convert(const string & tensor_file, bool verbose, string output_file)
-	: verbose(verbose), num_edges(0) {
-	// Pre-condition: assumes the tensor file contains the tensor in 1-based COO
+Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 	chrono::high_resolution_clock::time_point begin, end;
-
-	// 0 - Initialize the input stream
-	if (output_file == "") {
-		this->output_file = tensor_file + ".graph";
-	}
-	else {
-		this->output_file = output_file;
-	}
-
-	ifstream is(tensor_file);
-	if (!is.is_open()) {
-		cout << "Cannot open the tensor file" << endl;
-		exit(1);
-	}
-
 	if (verbose) {
-		cout << "Start: obtain the tensor dimension & widths" << endl;
+		cout << "Begin: read the tensor file" << endl;
 		begin = chrono::high_resolution_clock::now();
 	}
 
-	// 1 - Obtain the dimensions and widths
-	// 1.1 - Get the dimension of the tensor (assumes last entry of the line is value)
+	// 1 - Read the file, get the widths of the dimensions as well
+	// 1.1 - Create the input stream
+	ifstream is(filename);
+	if (!is.is_open())
+		throw FileNotFoundException();
+
+	// 1.2 - Obtain the dimension of the tensor
 	string first_line;
 	getline(is, first_line);
-	uint dimension = count(first_line.cbegin(), first_line.cend(), ' '); // dimension is equal to spaces in one line
-	is.seekg(0); // reset the input stream to beginning
+	uint dimension = count(first_line.cbegin(), first_line.cend(), ' ');
 
-	// 1.2 - Obtain the maximum coordinates of each modes so that we can build an array of vertices
+	// 1.3 Fill up the coordinate list and obtain the width of each dimension as well
 	super_diagonal.resize(dimension, 0);
+	is.seekg(0);
 	while (!is.eof()) {
+		vector< uint > current_coordinates(dimension);
 		for (uint i = 0; i < dimension; i++) {
+			uint component;
+			is >> component;
+
 			if (is.eof())
 				break;
 
-			uint current_coordinate;
-			is >> current_coordinate;
-			super_diagonal[i] = max(super_diagonal[i], current_coordinate);
+			current_coordinates[i] = component;
+			super_diagonal[i] = max(super_diagonal[i], component);
+			coordinates.push_back(current_coordinates);
 		}
 
-		// read out the value
-		double value;
-		is >> value;
-	}
-	is.clear();
-	is.seekg(0);
-
-	if (verbose) {
-		end = chrono::high_resolution_clock::now();
-		cout << "End: obtain the tensor dimension & widths [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl << endl;
-	}
-
-	cout << "Tensor Information ---------------" << endl
-		<< "Dimension: ";
-	for (vector<uint>::const_iterator dim = super_diagonal.cbegin(); dim != super_diagonal.cend(); dim++) {
-		cout << *dim;
-		if (next(dim, 1) != super_diagonal.cend()) {
-			cout << "x";
-		}
-	}
-	cout << endl;
-
-	createGraph(is);
-}
-
-void Convert::createGraph(ifstream & is) {
-	chrono::high_resolution_clock::time_point begin, end;
-
-	if (verbose) {
-		cout << endl
-			<< "Start: initializing graph vertices" << endl;
-		begin = chrono::high_resolution_clock::now();
-	}
-
-	// 1 - Use the diagonal info to construct the set of vertices with labels starting from 1
-	uint num_vertices = 0;
-	for (vector<uint>::const_iterator it = super_diagonal.cbegin(); it != super_diagonal.cend(); it++) {
-		num_vertices += *it;
-	}
-	vertices.resize(num_vertices);
-
-	if (verbose) {
-		end = chrono::high_resolution_clock::now();
-		cout << "End: initializing graph vertices [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl
-			<< "Begin: convertion to graph" << endl;
-		begin = chrono::high_resolution_clock::now();
-	}
-
-	// 2 - Read the tensor file again, this time populating the vertices with their neighbors
-	is.seekg(0);
-	while (!is.eof()) {
-		uint prev, cur;
-		is >> prev;
-		prev -= 1;
-		if (is.eof()) break;
-
-		for (uint i = 0; i < super_diagonal.size() - 1; i++) {
-			is >> cur;
-			if (is.eof()) break;
-
-			cur = cur - 1 + super_diagonal[i];
-			insertEdge(prev, cur);
-			prev = cur;
-		}
-
-		// read out the value
 		double value;
 		is >> value;
 	}
 
 	if (verbose) {
 		end = chrono::high_resolution_clock::now();
-		cout << "End: convertion to graph [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
+		cout << "End: read the tensor file [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 	}
+
+	processCoordinates();
 }
 
-void Convert::write_graph() {
+void Convert::processCoordinates() {
 	chrono::high_resolution_clock::time_point begin, end;
 	if (verbose) {
+		cout << "Begin: processing coordinates for all modes" << endl;
 		begin = chrono::high_resolution_clock::now();
-		cout << "Start: write graph" << endl;
 	}
+	// For each mode, insert the pairs into the appropriate hashtable
+	for (list< vector< uint > >::const_iterator it = coordinates.cbegin(); it != coordinates.cend(); it++) {
+		const vector< uint > & current_coordinates = *it;
 
-	// 0 - Initialize the output stream
-	ofstream os(output_file);
+		for (uint mode = 0; mode < super_diagonal.size(); mode++) {
+			// For one mode, enumerate all permutations of size 2 and insert them to the htable of appropriate mode
+			for (uint i = 0; i < current_coordinates.size() - 1; i++) {
+				if (i == mode) continue;
 
-	// First line of output: <num vertex> <num vertex> <num edges>
-	os << vertices.size() << " " << vertices.size() << " " << num_edges << endl;
+				uint label_1 = current_coordinates[mode] + (mode == 0 ? 0 : super_diagonal[mode - 1]);
+				uint label_2 = current_coordinates[i] + (i == 0 ? 0 : super_diagonal[i - 1]);
 
-	// 1 - Output the graph
-	// 1.1 - Output the header info
-	// <dimension 1 width> <dimension 2 width> ... <dim. n width>
-	for (vector<uint>::const_iterator width = super_diagonal.cbegin(); width != super_diagonal.cend(); width++) {
-		os << *width << " ";
-	}
-	os << endl;
-
-	// 1 - Output the graph in following format
-	// <vertex 1> <vertex 2> <weight>
-	uint label_counter = 0;
-	for (vector<Vertex>::const_iterator it = vertices.begin(); it != vertices.cend(); it++, label_counter++) {
-		for (unordered_map< uint, uint >::const_iterator neighbor = it->neighbors.cbegin(); neighbor != it->neighbors.cend(); neighbor++) {
-			os << label_counter + 1 << " " << neighbor->first + 1<< " " << neighbor->second << endl;
+				list< Edge >::iterator find_result = find({ label_1, label_2 }, mode);
+				if (find_result == modes[mode].end()) {
+					modes[mode].push_back(Edge(label_1, label_2, 1));
+				}
+				else {
+					find_result->weight += 1;
+				}
+			}
 		}
 	}
 
 	if (verbose) {
 		end = chrono::high_resolution_clock::now();
-		cout << "End: write graph [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
+		cout << "End: processing coordinates for all modes [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 	}
 }
 
-void Convert::insertEdge(uint u1, uint u2) {
-	// Pre-condition: vertex <u1> and <u2> exists in <vertices>
-	assert(u1 >= 0 && u1 < vertices.size() && u2 >= 0 && u2 < vertices.size());
-
-	num_edges++;
-
-	unordered_map< uint, uint > & u1_neighbors = vertices[u1].neighbors;
-
-	// 1 - Search for the edge
-	unordered_map< uint, uint >::iterator edge = u1_neighbors.find(u2);
-	
-	// 1.1 - If the edge doesn't exists, create it and terminate
-	if (edge == u1_neighbors.end()) {
-		u1_neighbors.insert({ u2, 1 });
-		vertices[u2].ancestors.push_back(u1);
+void Convert::write_graph() const {
+	uint vertex_count = 0;
+	for (vector< uint >::const_iterator it = super_diagonal.cbegin(); it != super_diagonal.cend(); it++) {
+		vertex_count++;
 	}
-	else { // 2 - If the edge exists, update the weights of appropriate edges
-		fixWeights(u2);
+
+	for (uint i = 0; i < modes.size(); i++) {
+		ofstream os("mode_" + to_string(i) + ".graph");
+
+		// print the header info <vertex count> <vertex count> <edge count>
+		os << vertex_count << " " << vertex_count << " " << modes[i].size() << endl;
+
+		for (auto it = modes[i].cbegin(); it != modes[i].cend(); it++) {
+			os << it->first.first << " " << it->first.second << " " << it->second << endl;
+		}
 	}
 }
 
-uint Convert::getMode(const uint vertex_id) const {
-	uint mode_counter = 0;
-	for (vector<uint>::const_iterator width = super_diagonal.cbegin(); width != super_diagonal.cend(); width++, mode_counter++) {
-		if (vertex_id < *width)
-			return mode_counter;
+list< Edge >::iterator Convert::find(const pair< uint, uint > & vertex_pair, const uint mode) {
+	for (list< Edge >::iterator it = modes[mode].begin(); it != modes[mode].end(); it++) {
+		if (it->vertex1 == vertex_pair) {
+			return it;
+		}
 	}
-}
-
-void Convert::fixWeights(const uint source) {
-
-#ifdef _DEBUG
-	cout << "fixWeights called for " << source << endl;
-#endif
-
-	if (vertices[source].ancestors.empty())
-		return;
-
-	for (list<uint>::iterator ancestor = vertices[source].ancestors.begin(); ancestor != vertices[source].ancestors.end(); ancestor++) {
-		unordered_map< uint, uint > & anc_neighbors = vertices[*ancestor].neighbors;
-		unordered_map< uint, uint >::iterator edge = anc_neighbors.find(source);
-		assert(edge != anc_neighbors.end());
-
-		edge->second += 1;
-		fixWeights(*ancestor);
-	}
+	return modes[mode].end();
 }

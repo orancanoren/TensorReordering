@@ -46,13 +46,10 @@ int main(int argc, char * argv[]) {
 		verbose = true;
 	}
 
-	string infile, outfile;
+	string infile;
 	for (vector<string>::const_iterator it = arguments.cbegin() + 1; it != arguments.cend() && infile == ""; it++) {
 		if (it->at(0) != '-') {
 			infile = *it;
-		}
-		else if (it->substr(0, 3) == "-o=") {
-			outfile = it->substr(3);
 		}
 	}
 	if (infile == "") {
@@ -62,7 +59,7 @@ int main(int argc, char * argv[]) {
 		cout << "****************************************" << endl;
 	}
 
-	Convert conv_obj(infile, verbose, outfile);
+	Convert conv_obj(infile, verbose);
 	conv_obj.write_graph();
 
 	cout << "************************************" << endl;

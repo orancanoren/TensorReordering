@@ -105,7 +105,7 @@ void Tmetrics::mode_independent_metrics() const {
 	for (list<Coordinate>::const_iterator coordinate = coords.cbegin(); coordinate != coords.cend(); coordinate++) {
 		distance_average += distance_to_diagonal(coordinate) / coords.size();
 		pair<uint, double> pairwise_metrics = pairwise_difference(coordinate);
-		pairwise_metrics_sum.first += pairwise_metrics.first / coords.size();
+		pairwise_metrics_sum.first += static_cast<double>(pairwise_metrics.first) / coords.size();
 		pairwise_metrics_sum.second += pairwise_metrics.second / coords.size();
 	}
 

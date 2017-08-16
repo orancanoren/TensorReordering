@@ -1,39 +1,58 @@
-#ifndef _REORDER_HPP
-#define _REORDER_HPP
+#ifndef _CONVERT_HPP
+#define _CONVERT_HPP
 
-#include <vector>
 #include <string>
+#include <vector>
+#include <unordered_map>
 #include <exception>
 #include <list>
-#include <unordered_map>
+#include <iostream>
 
 typedef unsigned int uint;
 
+struct Edge {
+	Edge(uint v1, uint v2, uint weight) : vertex1(v1), vertex2(v2), weight(weight) { }
+
+	uint vertex1;
+	uint vertex2;
+	uint weight;
+};
+
 class Convert {
 public:
-	Convert(const std::string & tensor_file, bool verbose = false, std::string output_file = "");
-	
-	void write_graph();
+	Convert(const std::string filename, bool verbose = false);
+
+	void write_graph() const;
 private:
-	struct Vertex {
-		std::list<uint> ancestors; // neighbors from lower modes
-		std::unordered_map< uint, uint > neighbors; // < neighbor_id, weight >
-	};
 
 	// Member variables
-	std::vector<Vertex> vertices;
-	std::vector<uint> super_diagonal;
+	std::vector< std::list< Edge > > modes;
+	std::vector< uint > super_diagonal;
+	std::list< std::vector< uint > > coordinates;
 	bool verbose;
-	std::string output_file;
-	uint num_edges;
 
-	// Graph Mutators
-	void createGraph(std::ifstream & is);
-	void insertEdge(uint u1, uint u2); // inserts a directed edge from <u1> to <u2>
+	// Mutators
+	void processCoordinates();
 
 	// Utilities
-	uint getMode(const uint vertex_id) const;
-	void fixWeights(const uint sourceVertex);
+	std::list< Edge >::iterator find(const std::pair< uint, uint > & edge_to_find, const uint mode);
+};
+
+// EXCEPTION CLASSES BELOW
+
+class ConvertException : public std::exception {
+public:
+	ConvertException(const char * msg) : msg(msg) { }
+	void what() {
+		std::cout << msg;
+	}
+private:
+	const char * msg;
+};
+
+class FileNotFoundException : public ConvertException {
+public:
+	FileNotFoundException() : ConvertException("Tensor file not found!") {}
 };
 
 #endif

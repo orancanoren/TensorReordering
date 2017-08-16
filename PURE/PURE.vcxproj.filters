@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TensorToGraph\convert.cpp">
+    <ClCompile Include="TensorMetrics\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TensorToGraph\main.cpp">
+    <ClCompile Include="TensorMetrics\tmetrics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TensorToGraph\convert.hpp">
+    <ClInclude Include="TensorMetrics\tmetrics.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
