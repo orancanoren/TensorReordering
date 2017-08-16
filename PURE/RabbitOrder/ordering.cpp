@@ -40,15 +40,24 @@ Ordering::Ordering(string filename, bool symmetric, bool zero_based, bool write_
 	int header_end_indicator;
 
 	is >> vertexCount >> edgeCount >> header_end_indicator;
+	is.ignore();
 	vertices.resize(vertexCount);
 	dendrogram = Dendrogram(vertexCount);
+
+	cout << vertexCount << " vertices" << endl
+	     << edgeCount << " edges" << endl;
 
 	for (uint current_vertex = 0; !is.eof(); current_vertex++) {
 		string line;
 		getline(is, line);
+		if (is.eof())
+		  break; // possible bug [not reading the last line]
 
-		if (is.fail())
-			throw InvalidInputException();
+		if (is.fail()) {
+		  cout << "is failed" << endl;
+		  throw InvalidInputException();
+			
+		}
 
 		// Parse the current line
 		istringstream iss(line);
@@ -56,10 +65,15 @@ Ordering::Ordering(string filename, bool symmetric, bool zero_based, bool write_
 			uint neighbor, weight;
 			iss >> neighbor >> weight;
 
-			if (iss.fail())
-				throw InvalidInputException();
+			if (iss.eof())
+			  break;
 
-			if (zero_based) {
+			if (iss.fail()) {
+			  cout << "iss failed" << endl;
+			  throw InvalidInputException();
+			}
+
+			if (!zero_based) {
 				neighbor -= 1;
 			}
 
@@ -83,8 +97,9 @@ Ordering::Ordering(string filename, bool symmetric, bool zero_based, bool write_
 
 void Ordering::insertEdge(uint from, uint to, uint value) {
 	// 0 - Ensure that <from> exists among the vertices
-	if (from >= vertices.size() || from < 0) 
+  if (from >= vertices.size() || from < 0) {
 		throw NotFoundException(VERTEX_NOT_FOUND);
+  }
 
 	vertices[from].edges.insert({ to, value });
 }
