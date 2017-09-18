@@ -228,14 +228,6 @@ void Ordering::community_detection() {
 
 	vector<Vertex> originalArray = vertices; // we'll modify the <vertices> array by performing merge operations,
 	// we'll use <originalArray> to revert back to the original array we had
-
-	// 1 - Set all the edge weights to 1
-	for (uint i = 0; i < vertices.size(); i++) {
-		unordered_map<uint, uint> & edges = vertices[i].edges;
-		for (unordered_map<uint, uint>::iterator it = edges.begin(); it != edges.end(); it++) {
-			it->second = 1;
-		}
-	}
 	
 	// 2 - Iterate vertices in increasing order of degree
 	for (vector<Vertex>::const_iterator iter = sortedVertices.begin(); iter != sortedVertices.end(); iter++) {
