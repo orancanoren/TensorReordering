@@ -21,6 +21,8 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 		begin = chrono::high_resolution_clock::now();
 	}
 
+	cout << "Important: current version assumes the COO coordinates are 1-based!" << endl;
+
 	// 1 - Obtain the number of vertices and dimension; create pairCoordinates
 	// 1.1 - Create the input stream
 	ifstream is(filename);
@@ -44,9 +46,6 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 		for (uint i = 0; i < dimension; i++) {
 			iss >> currentCoordinates[i];
 		}
-
-		string value;
-		iss >> value;
 
 		for (uint i = 0; i < dimension; i++) {
 			const uint vertex1 = currentCoordinates[i];
