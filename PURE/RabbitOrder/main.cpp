@@ -15,7 +15,7 @@ void help() {
 		<< "\t-write_graph \t\t writes the re-ordered graph in MatrixMarket format" << endl;
 }
 
-int main(int argc, char * argv[]) {
+void ordering(int argc, char * argv[]) {
 	// Parse the CLI arguments
 	vector<string> arguments(argc);
 	for (int i = 0; i < argc; i++) {
@@ -66,6 +66,4 @@ int main(int argc, char * argv[]) {
 		cout << "Error occured:" << endl
 			<< exc.what() << endl;
 	}
-
-	return 0;
 }

@@ -19,13 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RabbitOrder\dendrogram.hpp" />
-    <ClInclude Include="RabbitOrder\ordering.hpp" />
+    <ClCompile Include="TensorToGraph\convert.cpp" />
+    <ClCompile Include="TensorToGraph\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RabbitOrder\dendrogram.cpp" />
-    <ClCompile Include="RabbitOrder\main.cpp" />
-    <ClCompile Include="RabbitOrder\ordering.cpp" />
+    <ClInclude Include="TensorToGraph\convert.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>
@@ -50,7 +48,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">

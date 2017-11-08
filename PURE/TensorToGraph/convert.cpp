@@ -1,53 +1,60 @@
 #include "convert.hpp"
-#include <vector>
-#include <list>
 #include <string>
 #include <chrono>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include <unordered_map>
 #include <sstream>
 
 using namespace std;
 
 Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
+	/* The file format is assumed to be:
+	<dim 1 coordinate> <dim 2 coordinate> ... <dim n coordinate> <value>
+	<dim 1 coordinate> <dim 2 coordinate> ... <dim n coordinate> <value>
+	...
+	*/
+
 	chrono::high_resolution_clock::time_point begin, end;
 	if (verbose) {
 		cout << "Begin: read the tensor file" << endl;
 		begin = chrono::high_resolution_clock::now();
 	}
 
-	// 1 - Read the file, get the widths of the dimensions as well
+	cout << "Important: current version assumes the COO coordinates are 1-based!" << endl;
+
+	// 1 - Obtain the number of vertices and dimension; create pairCoordinates
 	// 1.1 - Create the input stream
 	ifstream is(filename);
 	if (!is.is_open())
 		throw FileNotFoundException();
 
-	// 1.2 - Obtain the dimension of the tensor
+	// 1.2 - Obtain the dimension of the tensor and initialize pairCoordinates
 	string first_line;
 	getline(is, first_line);
-	uint dimension = count(first_line.cbegin(), first_line.cend(), ' ');
+	dimension = count(first_line.cbegin(), first_line.cend(), ' ');
+	pairCoordinates = new Edge* [(dimension)*(dimension - 1) / 2];
+	is.seekg(0); // reset the read pointer
 
-	// 1.3 Fill up the coordinate list and obtain the width of each dimension as well
-	super_diagonal.resize(dimension, 0);
-	is.seekg(0);
+	// 1.3 Fill up the pairCoordinates arrays
 	while (!is.eof()) {
-		vector< uint > current_coordinates(dimension);
+		string line;
+		getline(cin, line);
+		istringstream iss(line);
+
+		uint * currentCoordinates = new uint[dimension];
 		for (uint i = 0; i < dimension; i++) {
-			uint component;
-			is >> component;
-
-			if (is.eof())
-				break;
-
-			current_coordinates[i] = component;
-			super_diagonal[i] = max(super_diagonal[i], component);
-			coordinates.push_back(current_coordinates);
+			iss >> currentCoordinates[i];
 		}
 
-		double value;
-		is >> value;
+		for (uint i = 0; i < dimension; i++) {
+			const uint vertex1 = currentCoordinates[i];
+			for (uint j = i + 1; j < dimension; j++) {
+				pairCoordinates[i][j].vertex1 = vertex1;
+				pairCoordinates[i][j].vertex2 = currentCoordinates[j];
+				pairCoordinates[i][j].weight = 1;
+			}
+		}
 	}
 
 	if (verbose) {
@@ -58,31 +65,46 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 	processCoordinates();
 }
 
+bool Convert::compareEdge(const Edge & lhs, const Edge & rhs) {
+	// Compare by vertex1 first and vertex2 afterwards
+	if (lhs.vertex1 < rhs.vertex1) {
+		return true;
+	}
+	else if (lhs.vertex1 == rhs.vertex1 && lhs.vertex2 < rhs.vertex2) {
+		return true;
+	}
+	return false;
+}
+
 void Convert::processCoordinates() {
+	// Post-condition: vertexPairs have been generated successfully
 	chrono::high_resolution_clock::time_point begin, end;
 	if (verbose) {
 		cout << "Begin: processing coordinates for all modes" << endl;
 		begin = chrono::high_resolution_clock::now();
 	}
-	// For each mode, insert the pairs into the appropriate hashtable
-	for (list< vector< uint > >::const_iterator it = coordinates.cbegin(); it != coordinates.cend(); it++) {
-		const vector< uint > & current_coordinates = *it;
+	
+	// 1 - Sort each pairCoordinate array
+	const uint pairCount = dimension*(dimension - 1) / 2;
+	for (uint i = 0; i < pairCount; i++) {
+		sort(pairCoordinates[i], pairCoordinates[i] + num_vertices, compareEdge);
+	}
 
-		for (uint mode = 0; mode < super_diagonal.size(); mode++) {
-			// For one mode, enumerate all permutations of size 2 and insert them to the htable of appropriate mode
-			for (uint i = 0; i < current_coordinates.size(); i++) {
-				if (i == mode) continue;
-
-				uint label_1 = current_coordinates[mode] + (mode == 0 ? 0 : super_diagonal[mode - 1]);
-				uint label_2 = current_coordinates[i] + (i == 0 ? 0 : super_diagonal[i - 1]);
-
-				list< Edge >::iterator find_result = find({ label_1, label_2 }, mode);
-				if (find_result == modes[mode].end()) {
-					modes[mode].push_back(Edge(label_1, label_2, 1));
-				}
-				else {
-					find_result->weight += 1;
-				}
+	// 2 - In a single pass over the pairCoordinate arrays, do the following:
+	// * By comparing adjacent elements, detect duplicates
+	// * equal adjacent pairs have found, mark the one with smaller array index by
+	// setting the edge weight 0
+	// * Increase the weight of the edge between the vertices by the value of the edge weight
+	// of the vertex pair got deleted in step 2
+	// * continue until the end of the array
+	for (uint currentArray = 0; currentArray < pairCount; currentArray++) {
+		for (unsigned int j = 1; j < num_vertices; j++) {
+			Edge & currentCoordinates = pairCoordinates[currentArray][j];
+			Edge & previousCoordinates = pairCoordinates[currentArray][j - 1];
+			if (previousCoordinates == currentCoordinates) {
+				// increase the weight of j'th pair's edge by (j-1)'th pair's edge
+				currentCoordinates.weight += previousCoordinates.weight;
+				previousCoordinates.weight = 0;
 			}
 		}
 	}
@@ -93,29 +115,31 @@ void Convert::processCoordinates() {
 	}
 }
 
-void Convert::write_graph() const {
-	uint vertex_count = 0;
-	for (vector< uint >::const_iterator it = super_diagonal.cbegin(); it != super_diagonal.cend(); it++) {
-		vertex_count++;
+void Convert::write_graph(const string & output_file) const {
+	chrono::high_resolution_clock::time_point begin, end;
+	if (verbose) {
+		begin = chrono::high_resolution_clock::now();
+		cout << "Starting writing the graph" << endl;
 	}
 
-	for (uint i = 0; i < modes.size(); i++) {
-		ofstream os("mode_" + to_string(i) + ".graph");
+	ofstream os(output_file);
+	if (!os.is_open()) {
+		throw FileNotFoundException();
+	}
 
-		// print the header info <vertex count> <vertex count> <edge count>
-		os << vertex_count << " " << vertex_count << " " << modes[i].size() << endl;
-
-		for (auto it = modes[i].cbegin(); it != modes[i].cend(); it++) {
-			os << it->first.first << " " << it->first.second << " " << it->second << endl;
+	// Iterate all arrays and output in the format:
+	// <vertex1> <vertex2> <weight>
+	const uint pairCount = dimension*(dimension - 1) / 2;
+	for (uint currentArray = 0; currentArray < pairCount; currentArray++) {
+		for (int j = 0; j < num_vertices; j++) {
+			const Edge & currentCoordinates = pairCoordinates[currentArray][j];
+			cout << currentCoordinates.vertex1 << ' ' << currentCoordinates.vertex2 
+				<< ' ' << currentCoordinates.weight << endl;
 		}
 	}
-}
 
-list< Edge >::iterator Convert::find(const pair< uint, uint > & vertex_pair, const uint mode) {
-	for (list< Edge >::iterator it = modes[mode].begin(); it != modes[mode].end(); it++) {
-		if (it->vertex1 == vertex_pair) {
-			return it;
-		}
+	if (verbose) {
+		end = chrono::high_resolution_clock::now();
+		cout << "Graph has been written [" << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << " ms]" << endl;
 	}
-	return modes[mode].end();
 }
