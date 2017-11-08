@@ -25,6 +25,9 @@
   <ItemGroup>
     <ClInclude Include="TensorToGraph\convert.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\Desktop\random_tensor.tns" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

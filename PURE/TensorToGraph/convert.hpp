@@ -4,6 +4,7 @@
 #include <string>
 #include <exception>
 #include <iostream>
+#include <vector>
 
 typedef unsigned int uint;
 
@@ -29,7 +30,7 @@ public:
 	void write_graph(const std::string & output_file) const;
 private:
 	// Member variables
-	Edge ** pairCoordinates;
+	std::vector<std::vector<Edge>> pairCoordinates;
 	bool verbose;
 	uint dimension;
 	uint num_vertices;
@@ -47,7 +48,7 @@ class ConvertException : public std::exception {
 public:
 	ConvertException(const char * msg) : msg(msg) { }
 	void what() {
-		std::cout << msg;
+		std::cout << msg << std::endl;
 	}
 private:
 	const char * msg;

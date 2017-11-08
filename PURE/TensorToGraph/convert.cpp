@@ -21,8 +21,6 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 		begin = chrono::high_resolution_clock::now();
 	}
 
-	cout << "Important: current version assumes the COO coordinates are 1-based!" << endl;
-
 	// 1 - Obtain the number of vertices and dimension; create pairCoordinates
 	// 1.1 - Create the input stream
 	ifstream is(filename);
@@ -34,8 +32,14 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 	getline(is, first_line);
 	dimension = count(first_line.cbegin(), first_line.cend(), ' ');
 	cout << "dimension: " << dimension << endl;
-	pairCoordinates = new Edge* [(dimension)*(dimension - 1) / 2];
+	const uint arrayCount = (dimension)*(dimension - 1) / 2;
+	pairCoordinates.resize(arrayCount);
+	for (uint i = 0; i < arrayCount; i++) {
+		pairCoordinates[i].resize(20000); // FOR DEBUG ONLY
+	}
 	is.seekg(0); // reset the read pointer
+
+	num_vertices = 0;
 
 	// 1.3 Fill up the pairCoordinates arrays
 	while (!is.eof()) {
@@ -47,7 +51,6 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 		for (uint i = 0; i < dimension; i++) {
 			iss >> currentCoordinates[i];
 		}
-		cout << "line: " << line << endl;
 		
 		if (line == "") {
 		  break;
@@ -56,9 +59,9 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 		string value;
 		iss >> value;
 
+		num_vertices++;
+
 		for (uint i = 0; i < dimension; i++) {
-		  // FOR DEBUG ONLY !!!
-		  pairCoordinates[i] = new Edge[20000];
 			const uint vertex1 = currentCoordinates[i];
 			for (uint j = i + 1; j < dimension; j++) {
 				pairCoordinates[i][j].vertex1 = vertex1;
@@ -89,17 +92,22 @@ bool Convert::compareEdge(const Edge & lhs, const Edge & rhs) {
 
 void Convert::processCoordinates() {
 	// Post-condition: vertexPairs have been generated successfully
-	chrono::high_resolution_clock::time_point begin, end;
+	chrono::high_resolution_clock::time_point begin, end, tempBegin;
 	if (verbose) {
 		cout << "Begin: processing coordinates for all modes" << endl;
 		begin = chrono::high_resolution_clock::now();
 	}
 	
 	// 1 - Sort each pairCoordinate array
+	tempBegin = chrono::high_resolution_clock::now();
+	cout << "Sorting the arrays" << endl;
 	const uint pairCount = dimension*(dimension - 1) / 2;
 	for (uint i = 0; i < pairCount; i++) {
-		sort(pairCoordinates[i], pairCoordinates[i] + num_vertices, compareEdge);
+		sort(pairCoordinates[i].begin(), pairCoordinates[i].begin() + num_vertices, compareEdge);
 	}
+	end = chrono::high_resolution_clock::now();
+	cout << "Sorting done ["
+		<< chrono::duration_cast<chrono::milliseconds>(end - tempBegin).count() << " ms]" << endl;
 
 	// 2 - In a single pass over the pairCoordinate arrays, do the following:
 	// * By comparing adjacent elements, detect duplicates
@@ -109,7 +117,7 @@ void Convert::processCoordinates() {
 	// of the vertex pair got deleted in step 2
 	// * continue until the end of the array
 	for (uint currentArray = 0; currentArray < pairCount; currentArray++) {
-		for (unsigned int j = 1; j < num_vertices; j++) {
+		for (unsigned int j = 1; j < pairCoordinates[currentArray].size(); j++) {
 			Edge & currentCoordinates = pairCoordinates[currentArray][j];
 			Edge & previousCoordinates = pairCoordinates[currentArray][j - 1];
 			if (previousCoordinates == currentCoordinates) {
@@ -134,9 +142,6 @@ void Convert::write_graph(const string & output_file) const {
 	}
 
 	ofstream os(output_file);
-	if (!os.is_open()) {
-		throw FileNotFoundException();
-	}
 
 	// Iterate all arrays and output in the format:
 	// <vertex1> <vertex2> <weight>
@@ -144,8 +149,10 @@ void Convert::write_graph(const string & output_file) const {
 	for (uint currentArray = 0; currentArray < pairCount; currentArray++) {
 		for (int j = 0; j < num_vertices; j++) {
 			const Edge & currentCoordinates = pairCoordinates[currentArray][j];
-			cout << currentCoordinates.vertex1 << ' ' << currentCoordinates.vertex2 
-				<< ' ' << currentCoordinates.weight << endl;
+			if (currentCoordinates.weight != 0) {
+				cout << currentCoordinates.vertex1 << ' ' << currentCoordinates.vertex2
+					<< ' ' << currentCoordinates.weight << endl;
+			}
 		}
 	}
 

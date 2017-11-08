@@ -69,8 +69,14 @@ int main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	Convert conv_obj(infile, verbose);
-	conv_obj.write_graph(outfile);
+	try {
+		Convert conv_obj(infile, verbose);
+		conv_obj.write_graph(outfile);
+	}
+	catch (ConvertException & exc) {
+		exc.what();
+	}
+	
 
 	cout << "************************************" << endl;
 	return 0;
