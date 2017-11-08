@@ -33,21 +33,32 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 	string first_line;
 	getline(is, first_line);
 	dimension = count(first_line.cbegin(), first_line.cend(), ' ');
+	cout << "dimension: " << dimension << endl;
 	pairCoordinates = new Edge* [(dimension)*(dimension - 1) / 2];
 	is.seekg(0); // reset the read pointer
 
 	// 1.3 Fill up the pairCoordinates arrays
 	while (!is.eof()) {
 		string line;
-		getline(cin, line);
+		getline(is, line);
 		istringstream iss(line);
 
 		uint * currentCoordinates = new uint[dimension];
 		for (uint i = 0; i < dimension; i++) {
 			iss >> currentCoordinates[i];
 		}
+		cout << "line: " << line << endl;
+		
+		if (line == "") {
+		  break;
+		}
+		
+		string value;
+		iss >> value;
 
 		for (uint i = 0; i < dimension; i++) {
+		  // FOR DEBUG ONLY !!!
+		  pairCoordinates[i] = new Edge[20000];
 			const uint vertex1 = currentCoordinates[i];
 			for (uint j = i + 1; j < dimension; j++) {
 				pairCoordinates[i][j].vertex1 = vertex1;

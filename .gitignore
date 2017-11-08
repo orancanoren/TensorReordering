@@ -241,3 +241,8 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /PURE/nipsGraph
+
+# Compilation outputs & generated graphs and tensors
+*.out
+*.graph
+*.tns
