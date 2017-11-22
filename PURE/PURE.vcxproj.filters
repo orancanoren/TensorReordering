@@ -15,6 +15,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\..\Desktop\random_tensor.tns" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="TensorToGraph\convert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -26,8 +29,5 @@
     <ClInclude Include="TensorToGraph\convert.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\..\Desktop\random_tensor.tns" />
   </ItemGroup>
 </Project>

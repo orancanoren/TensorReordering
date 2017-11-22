@@ -1,6 +1,6 @@
 #include "ordering.hpp"
 #include <iostream>
-#include <unordered_map>
+#include <set>
 #include <cassert>
 #include <list>
 #include <vector>
@@ -11,8 +11,6 @@
 #include <chrono>
 #include <string>
 #include <sstream>
-
-#define __STDC_LIMIT_MACOS
 
 using namespace std;
 
@@ -181,18 +179,18 @@ void Ordering::mergeVertices(uint u, uint v) {
 	// 1 - Relable the vertex that's being merged on to ( <v> --> <v'> )
 	vertices[v].label = new_id++;
 
-	unordered_map<uint, uint> & u_edges = vertices[u].edges, &v_edges = vertices[v].edges;
+	auto & u_edges = vertices[u].edges, &v_edges = vertices[v].edges;
 	// 2 - Reconnect edges connected to <u>, to <v'>
-	for (unordered_map<uint, uint>::iterator it = u_edges.begin(); it != u_edges.end(); it++) {
-		int neighbor_id = it->first;
+	for (auto it = u_edges.begin(); it != u_edges.end(); it++) {
+		int neighbor_id = it->toVertex;
 		if (neighbor_id == v || neighbor_id == u) {
 			continue;
 		}
 
-		unordered_map<uint, uint> & neighbor_edges = vertices[neighbor_id].edges;
-		unordered_map<uint, uint>::iterator findResult = neighbor_edges.find(u);
+		auto & neighbor_edges = vertices[neighbor_id].edges;
+		auto findResult = neighbor_edges.find(u);
 		assert(findResult != neighbor_edges.end());
-		int edgeWeight = findResult->second;
+		int edgeWeight = findResult->weight;
 		neighbor_edges.erase(findResult); // 2.1 - erase the edge connecting the current neighbor to <u>
 
 		// 2.2 - Create the edge incident on <u> and <v'>
@@ -237,8 +235,8 @@ void Ordering::community_detection() {
 		}
 
 		std::pair<uint, double> maxModularityNeighbor = { INT_MIN, INT_MIN }; // < vertex_label, modularity >
-		unordered_map<uint, uint> & edges = currentVertex.edges;
-		for (unordered_map<uint, uint>::const_iterator edge = edges.begin(); edge != edges.end(); edge++) {
+		auto & edges = currentVertex.edges;
+		for (auto edge = edges.begin(); edge != edges.end(); edge++) {
 			int neighborLabel = edge->first;
 			if (vertices[neighborLabel].label == currentVertex.label) {
 				continue;
@@ -265,7 +263,7 @@ const vector<uint> * Ordering::ordering_generation() {
 }
 
 double Ordering::modularity(uint u, uint v) {
-	unordered_map<uint, uint>::iterator edge = vertices[u].edges.find(v);
+	set<pair<uint, uint>>::iterator edge = vertices[u].edges.find(v);
 	assert(edge != vertices[u].edges.end());
 
 	double m = edgeCounter;

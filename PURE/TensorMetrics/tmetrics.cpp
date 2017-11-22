@@ -229,7 +229,7 @@ bool Tmetrics::Comparator::operator() (const Coordinate & lhs, const Coordinate 
 }
 
 void Tmetrics::createFibers(uint mode) {
-	// 0 - Sort the coordinates WRT to the current mode
+	// 0 - Sort the coordinates WRT the current mode
 	chrono::high_resolution_clock::time_point begin, end;
 	if (verbose) {
 		cout << "Start: Sorting coordinates WRT mode " << mode << endl;

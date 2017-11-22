@@ -9,7 +9,7 @@
 typedef unsigned int uint;
 
 struct Edge {
-	Edge() { weight = 1; }
+	Edge() { weight = 0; vertex1 = 0; vertex2 = 0; }
 	Edge(uint v1, uint v2, uint weight) : vertex1(v1), vertex2(v2), weight(weight) { }
 	uint vertex1;
 	uint vertex2;

@@ -4,9 +4,19 @@
 #include <vector>
 #include <exception>
 #include <unordered_map>
+#include <set>
 #include "dendrogram.hpp"
 
 typedef unsigned int uint;
+
+struct Edge {
+	uint toVertex;
+	uint weight;
+
+	bool operator=(const uint rhs) {
+		return this->toVertex == rhs;
+	}
+};
 
 class Ordering {
 public:
@@ -16,10 +26,19 @@ public:
 	void insertEdge(uint from, uint to, uint value);
 	void rabbitOrder(const std::string output_filename);
 private:
+	struct EdgeComparator {
+		bool operator()(const Edge & lhs, const Edge & rhs) const {
+			return lhs.toVertex == rhs.toVertex;
+		}
+		bool operator()(const Edge & lhs, const uint & rhs) const {
+			return lhs.toVertex == rhs;
+		}
+	};
+
 	struct Vertex {
 		Vertex() : label(labelCounter++), merged(false) { }
 
-		std::unordered_map<uint, uint> edges; // < neighbor label, edge weight >
+		std::set < Edge, EdgeComparator > edges; // < neighbor label, edge weight >
 		static uint labelCounter; // will be used to give out labels
 		bool merged;
 		uint label;

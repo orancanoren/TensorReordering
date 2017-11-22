@@ -32,10 +32,10 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 	getline(is, first_line);
 	dimension = count(first_line.cbegin(), first_line.cend(), ' ');
 	cout << "dimension: " << dimension << endl;
-	const uint arrayCount = (dimension)*(dimension - 1) / 2;
-	pairCoordinates.resize(arrayCount);
-	for (uint i = 0; i < arrayCount; i++) {
-		pairCoordinates[i].resize(20000); // FOR DEBUG ONLY
+	const uint modePairs = (dimension)*(dimension - 1) / 2;
+	pairCoordinates.resize(modePairs);
+	for (uint i = 0; i < modePairs; i++) {
+		pairCoordinates[i].resize(1000000); // Number of nonzeros [POSSIBLE BUG]
 	}
 	is.seekg(0); // reset the read pointer
 
@@ -59,16 +59,20 @@ Convert::Convert(const string filename, bool verbose) : verbose(verbose) {
 		string value;
 		iss >> value;
 
-		num_vertices++;
-
-		for (uint i = 0; i < dimension; i++) {
-			const uint vertex1 = currentCoordinates[i];
-			for (uint j = i + 1; j < dimension; j++) {
-				pairCoordinates[i][j].vertex1 = vertex1;
-				pairCoordinates[i][j].vertex2 = currentCoordinates[j];
-				pairCoordinates[i][j].weight = 1;
+		int modePair = 0;
+		for (uint mode1 = 0; mode1 < dimension - 1; mode1++) {
+			for (uint mode2 = mode1 + 1; mode2 < dimension; mode2++, modePair++) {
+				pairCoordinates[modePair][num_vertices].vertex1 = currentCoordinates[mode1];
+				pairCoordinates[modePair][num_vertices].vertex2 = currentCoordinates[mode2];
+				pairCoordinates[modePair][num_vertices].weight = 1;
 			}
 		}
+
+		num_vertices++;
+	}
+
+	for (int i = 0; i < modePairs; i++) {
+		pairCoordinates[i].resize(num_vertices);
 	}
 
 	if (verbose) {
@@ -103,7 +107,7 @@ void Convert::processCoordinates() {
 	cout << "Sorting the arrays" << endl;
 	const uint pairCount = dimension*(dimension - 1) / 2;
 	for (uint i = 0; i < pairCount; i++) {
-		sort(pairCoordinates[i].begin(), pairCoordinates[i].begin() + num_vertices, compareEdge);
+		sort(pairCoordinates[i].begin(), pairCoordinates[i].end(), compareEdge);
 	}
 	end = chrono::high_resolution_clock::now();
 	cout << "Sorting done ["
@@ -117,9 +121,9 @@ void Convert::processCoordinates() {
 	// of the vertex pair got deleted in step 2
 	// * continue until the end of the array
 	for (uint currentArray = 0; currentArray < pairCount; currentArray++) {
-		for (unsigned int j = 1; j < pairCoordinates[currentArray].size(); j++) {
-			Edge & currentCoordinates = pairCoordinates[currentArray][j];
-			Edge & previousCoordinates = pairCoordinates[currentArray][j - 1];
+		for (uint index = 1; index < pairCoordinates[currentArray].size(); index++) {
+			Edge & currentCoordinates = pairCoordinates[currentArray][index];
+			Edge & previousCoordinates = pairCoordinates[currentArray][index - 1];
 			if (previousCoordinates == currentCoordinates) {
 				// increase the weight of j'th pair's edge by (j-1)'th pair's edge
 				currentCoordinates.weight += previousCoordinates.weight;
@@ -141,18 +145,33 @@ void Convert::write_graph(const string & output_file) const {
 		cout << "Starting writing the graph" << endl;
 	}
 
-	ofstream os(output_file);
+	//ofstream os(output_file);
 
 	// Iterate all arrays and output in the format:
 	// <vertex1> <vertex2> <weight>
+	int mode1 = 0, mode2 = 1;
 	const uint pairCount = dimension*(dimension - 1) / 2;
 	for (uint currentArray = 0; currentArray < pairCount; currentArray++) {
-		for (int j = 0; j < num_vertices; j++) {
-			const Edge & currentCoordinates = pairCoordinates[currentArray][j];
+		ofstream os("mode_" + to_string(mode1) + "_" + to_string(mode2) + ".graph");
+		if (!os.is_open()) {
+			cout << "Cannot create output stream for modes " << mode1 << " and " << mode2 << endl;
+		}
+		for (const Edge & currentCoordinates: pairCoordinates[currentArray]) {
 			if (currentCoordinates.weight != 0) {
-				cout << currentCoordinates.vertex1 << ' ' << currentCoordinates.vertex2
+				os << currentCoordinates.vertex1 << ' ' << currentCoordinates.vertex2
 					<< ' ' << currentCoordinates.weight << endl;
+				if (currentCoordinates.weight > 1) {
+					cout << currentCoordinates.vertex1 << ' ' << currentCoordinates.vertex2
+						<< ' ' << currentCoordinates.weight << endl;
+				}
 			}
+		}
+		if (mode2 + 1 == dimension) {
+			mode1++;
+			mode2 = mode1 + 1;
+		}
+		else {
+			mode2++;
 		}
 	}
 
