@@ -22,11 +22,11 @@
     <None Include="..\..\..\..\Desktop\random_tensor.tns" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TensorToGraph\convert.cpp" />
-    <ClCompile Include="TensorToGraph\main.cpp" />
+    <ClCompile Include="RelabelTensor\main.cpp" />
+    <ClCompile Include="RelabelTensor\relabel.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TensorToGraph\convert.hpp" />
+    <ClInclude Include="RelabelTensor\relabel.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C0087887-D652-4750-A350-37B7CCE61D2A}</ProjectGuid>

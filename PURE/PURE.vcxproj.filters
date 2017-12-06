@@ -18,15 +18,15 @@
     <None Include="..\..\..\..\Desktop\random_tensor.tns" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TensorToGraph\convert.cpp">
+    <ClCompile Include="RelabelTensor\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TensorToGraph\main.cpp">
+    <ClCompile Include="RelabelTensor\relabel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TensorToGraph\convert.hpp">
+    <ClInclude Include="RelabelTensor\relabel.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

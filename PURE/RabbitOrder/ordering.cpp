@@ -19,72 +19,86 @@ using namespace std;
 uint Ordering::Vertex::labelCounter = 0;
 
 Ordering::Ordering(string filename, bool symmetric, bool zero_based, bool write_graph) 
-	: symmetric(symmetric), valuesExist(valuesExist), writeGraph(writeGraph)  {
-	/* Input Format:
-	 * First line: <vertex count> <edge count>
-	 * For any line <i> of remaining lines:
-	 * <neighbor 1 of vertex <i>> <edge weight> <neighbor 2 of vertex<i>> <edge weight>
+	: symmetric(symmetric), valuesExist(valuesExist), writeGraph(write_graph)  {
+	/* Input Format: first two lines contain header info [dimension widhts & # of edges]
+	 * First line: % width1 width2 ... widthN
+	 * Second line: #_of_edges
+	 * Next <#_of_edges> lines: vertex1 vertex2 weight
 	 */
 
 	chrono::high_resolution_clock::time_point begin, end;
 
-	// 1 - Create and read the input stream
+	// 1 - Create the input stream
 	ifstream is(filename);
-	if (!is.is_open()) throw InputFileErrorException();
+	if (!is.is_open()) {
+		throw InputFileErrorException();
+	}
 	cout << "Start: read the graph file" << endl;
 
-	uint vertexCount, edgeCount;
 	begin = chrono::high_resolution_clock::now();
-	int header_end_indicator;
 
-	is >> vertexCount >> edgeCount >> header_end_indicator;
-	is.ignore();
-	vertices.resize(vertexCount);
-	dendrogram = Dendrogram(vertexCount);
-
-	cout << vertexCount << " vertices" << endl
-	     << edgeCount << " edges" << endl;
-
-	for (uint current_vertex = 0; !is.eof(); current_vertex++) {
-		string line;
-		getline(is, line);
-		if (is.eof())
-		  break; // possible bug [not reading the last line]
-
-		if (is.fail()) {
-		  cout << "is failed" << endl;
-		  throw InvalidInputException();
-			
+	// 2 - read the first line [header info] & set values of member variables
+	string line_buffer;
+	getline(is, line_buffer);
+	num_vertices = 0;
+	if (line_buffer[0] != '%') {
+		cerr << "Graph file is incompatible - header info not found" << endl;
+	}
+	istringstream iss(line_buffer);
+	iss >> line_buffer;
+	while (!iss.eof()) {
+		string current_width;
+		iss >> current_width;
+		try {
+			num_vertices += stoi(current_width);
+			dimension_widths.push_back(stoi(current_width));
 		}
-
-		// Parse the current line
-		istringstream iss(line);
-		while (!iss.eof()) {
-			uint neighbor, weight;
-			iss >> neighbor >> weight;
-
-			if (iss.eof())
-			  break;
-
-			if (iss.fail()) {
-			  cout << "iss failed" << endl;
-			  throw InvalidInputException();
-			}
-
-			if (!zero_based) {
-				neighbor -= 1;
-			}
-
-			insertEdge(current_vertex, neighbor, weight);
-			if (symmetric) {
-				insertEdge(neighbor, current_vertex, weight);
-			}
+		catch (...) {
+			break;
 		}
 	}
 
-	// 2 - Set the values of member variables according to the read data
-	new_id = vertexCount;
-	edgeCounter = edgeCount;
+	getline(is, line_buffer);
+	if (line_buffer[0] != '%') {
+		cerr << "Graph file is incompatible - header info not found" << endl;
+	}
+	iss = istringstream(line_buffer);
+	iss >> line_buffer; // read the "%" out
+	iss >> num_edges;
+	vertices.resize(num_vertices);
+	new_id = num_vertices;
+	dendrogram = Dendrogram(num_vertices);
+	cout << num_vertices << " vertices " << num_edges << " edges" << endl;
+	
+	// 3 - read the edges of the graph
+	uint num_edges_read = 0;
+	for (uint current_edge = 0; !is.eof(); current_edge++, num_edges_read++) {
+		string vertex1, vertex2, weight; // weight is also provided as unsigned integers, always
+		/*
+		if (is.eof())
+		  break; // possible bug [not reading the last line] - but needed
+		 */
+
+		if (is.fail()) {
+		  cerr << "input stream failed" << endl;
+		  throw InvalidInputException();
+		}
+
+		try {
+			is >> vertex1 >> vertex2 >> weight;
+			insertEdge(stoi(vertex1), stoi(vertex2), stoi(weight));
+			if (symmetric) {
+				insertEdge(stoi(vertex2), stoi(vertex1), stoi(weight));
+			}
+		}
+		catch (...) {
+			break;
+		}
+	}
+
+	if (num_edges_read != num_edges) {
+		cerr << "Graph file has fewer edges than expected" << endl;
+	}
 
 	end = chrono::high_resolution_clock::now();
 	cout << "End: read the graph file [" << 
@@ -133,6 +147,13 @@ void Ordering::rabbitOrder(const string output_filename) {
 
 	// 3 - Write output
 	ofstream os(output_filename);
+	// 3.1 - write out header info
+	os << "% ";
+	for (int i = 0; i < dimension_widths.size(); i++) {
+		os << dimension_widths[i] << " ";
+	}
+	os << endl << "% " << num_vertices << endl;
+	// 3.2 - write new labels seperated by spaces
 	begin = chrono::high_resolution_clock::now();
 	for (vector<uint>::const_iterator it = new_labels.begin(); it != new_labels.end(); it++) {
 	  os << *it << " ";
@@ -182,7 +203,7 @@ void Ordering::mergeVertices(uint u, uint v) {
 	auto & u_edges = vertices[u].edges, &v_edges = vertices[v].edges;
 	// 2 - Reconnect edges connected to <u>, to <v'>
 	for (auto it = u_edges.begin(); it != u_edges.end(); it++) {
-		int neighbor_id = it->toVertex;
+		int neighbor_id = it->first;
 		if (neighbor_id == v || neighbor_id == u) {
 			continue;
 		}
@@ -190,7 +211,7 @@ void Ordering::mergeVertices(uint u, uint v) {
 		auto & neighbor_edges = vertices[neighbor_id].edges;
 		auto findResult = neighbor_edges.find(u);
 		assert(findResult != neighbor_edges.end());
-		int edgeWeight = findResult->weight;
+		int edgeWeight = findResult->second;
 		neighbor_edges.erase(findResult); // 2.1 - erase the edge connecting the current neighbor to <u>
 
 		// 2.2 - Create the edge incident on <u> and <v'>
@@ -263,10 +284,10 @@ const vector<uint> * Ordering::ordering_generation() {
 }
 
 double Ordering::modularity(uint u, uint v) {
-	set<pair<uint, uint>>::iterator edge = vertices[u].edges.find(v);
+	auto edge = vertices[u].edges.find(v);
 	assert(edge != vertices[u].edges.end());
 
-	double m = edgeCounter;
+	double m = num_edges;
 	double weighted_degree_u = 0.0;
 	double weighted_degree_v = 0.0;
 

@@ -37,8 +37,8 @@ private:
 
 	struct Vertex {
 		Vertex() : label(labelCounter++), merged(false) { }
-
-		std::set < Edge, EdgeComparator > edges; // < neighbor label, edge weight >
+		
+		std::unordered_map<uint, uint> edges; // < neighbor label, edge weight >
 		static uint labelCounter; // will be used to give out labels
 		bool merged;
 		uint label;
@@ -50,7 +50,9 @@ private:
 
 	// Member variables
 	uint new_id;
-	uint edgeCounter;
+	uint num_edges;
+	uint num_vertices;
+	std::vector<uint> dimension_widths;
 	bool symmetric;
 	bool valuesExist;
 	bool writeGraph;

@@ -8,10 +8,17 @@ typedef unsigned int uint;
 
 class Relabel {
 public:
-	Relabel(std::string tensor_file, std::string perm_file, bool verbose, bool no_values);
+	Relabel(const std::string permutation_file, bool verbose);
+
+	void relabel_tensor(const std::string tensor_file, const std::string output_file);
 private:
-	std::vector< uint > coordiantes;
-	std::vector< uint > permutation;
+	std::vector<uint> tensor_coordiantes;
+	std::vector<uint> permutation_labels;
+	std::vector<uint> dimension_widths;
+
+	bool verbose;
+
+	uint getTensorCoordinate(const uint & label) const;
 };
 
 #endif

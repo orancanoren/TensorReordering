@@ -9,20 +9,20 @@ void help() {
 	cout << "Usage: PURE GRAPH [OPTION...]" << endl
 		<< "----------------------------------------------------" << endl
 		<< "Available options:" << endl << endl
-		<< "\t-zero_based \t\t vertices are labeled zero based" << endl
-		<< "\t-symmetric \t\t for the edge (u, v) the file doesn't contain (v, u)" << endl
+		<< "\t-one_based \t\t vertices are labeled one based" << endl
+		<< "\t-not_symmetric \t\t for the edge (u, v) the file doesn't contain (v, u)" << endl
 		<< "\t-o=FILE_NAME \t\t name of the output file" << endl
 		<< "\t-write_graph \t\t writes the re-ordered graph in MatrixMarket format" << endl;
 }
 
-void ordering(int argc, char * argv[]) {
+int main(int argc, char * argv[]) {
 	// Parse the CLI arguments
 	vector<string> arguments(argc);
 	for (int i = 0; i < argc; i++) {
 		arguments[i] = string(argv[i]);
 	}
 
-	bool valuesExist = false, symmetric = false, oneBased = true, writeGraph = false;
+	bool valuesExist = false, symmetric = true, oneBased = false, writeGraph = false;
 	string input_filename, output_filename = "rabbit_permutation.txt";
 
 	if (find(begin(arguments), end(arguments), "-symmetric") != end(arguments)) {
