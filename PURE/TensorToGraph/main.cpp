@@ -7,7 +7,7 @@
 using namespace std;
 
 void usage() {
-	cout << "Usage: PURE TENSOR -[OPTIONS...]" << endl;
+	cout << "Usage: PURE TENSOR -nnz NNZ -n DIMENSION WIDTH1 WIDTH2... -[OPTIONS...]" << endl;
 }
 
 void help() {
@@ -15,7 +15,7 @@ void help() {
 		<< "-----------------------" << endl;
 	usage();
 	cout << "Avaiable options:" << endl
-		<< "\t-o=FILE\t\t sets the name of the output file" << endl
+		<< "\t-o FILE\t\t sets the name of the output file" << endl
 		<< "\t-v \t\t verbose mode" << endl;
 }
 
@@ -24,7 +24,6 @@ int main(int argc, char * argv[]) {
 
 	// 0 - Parse CLI arguments
 	vector<string> arguments(argc);
-	int nnz = -1, dimension = -1;
 	for (int i = 0; i < argc; i++) {
 		arguments[i] = string(argv[i]);
 	}
@@ -36,47 +35,85 @@ int main(int argc, char * argv[]) {
 		exit(0);
 		cout << "****************************************" << endl;
 	}
-	else if (argc < 2) {
+	else if (argc < 4) {
 		usage();
 		exit(0);
 		cout << "****************************************" << endl;
 	}
 
-	if (find(begin(arguments), end(arguments), "-v") != end(arguments)) {
-		cout << "Verbose mode" << endl;
-		verbose = true;
-	}
-
-	string infile, outfile;
-	for (vector<string>::const_iterator it = arguments.cbegin() + 1; it != arguments.cend() && infile == ""; it++) {
-		if (it->at(0) != '-') {
-			infile = *it;
+	string infile = argv[1];
+	string outfile = "converted_graph.txt";
+	uint dimension = 0;
+	uint * mode_widths;
+	uint nnz = 0;
+	uint num_widths_read = 0;
+	bool dimensions_provided = false;
+	for (int i = 2; i < argc; i++) {
+		const string arg_i = argv[i];
+		if (arg_i == "-v") {
+			verbose = true;
 		}
-		else if (it->substr(0, 3) == "-o=") {
-			outfile = it->substr(2);
-			if (outfile == "") {
-				cout << "Output file cannot be nullstring" << endl;
-				cout << "****************************************" << endl;
+		else if (arg_i == "-o") {
+			if (i + 1 < argc && argv[i + 1][0] != '-') {
+				outfile = argv[i + 1];
+				i++;
+			}
+			else {
+				cerr << "An output file must be provided with -o option!" << endl;
 				exit(1);
 			}
-
+		}
+		else if (arg_i == "-n") {
+			if (i + 1 < argc && argv[i + 1][0] != '-') {
+				i++;
+				dimension = _atoi64(argv[i]);
+				mode_widths = new uint[dimension];
+				uint mode = 0;
+				i++;
+				for (; i < argc; i++) {
+					num_widths_read++;
+					mode_widths[mode] = _atoi64(argv[i]);
+					mode++;
+				}
+				dimensions_provided = true;
+			}
+			else {
+				cerr << "Dimension and widths must be provided" << endl;
+				exit(1);
+			}
+		}
+		else if (arg_i == "-nnz") {
+			if (i + 1 < argc) {
+				nnz = _atoi64(argv[i + 1]);
+			}
+			else {
+				cerr << "Number of nonzeros must be proivded" << endl;
+				exit(1);
+			}
+			++i;
+		}
+		else {
+			cerr << "Unknown command line option " << arg_i << endl;
+			exit(1);
 		}
 	}
-	if (infile == "") {
-		cout << "A tensor file must be provided" << endl
-			<< "PURE --help for more info" << endl;
-		cout << "****************************************" << endl;
+
+	if (num_widths_read != dimension) {
+		cerr << "widths for all dimensions must be provided" << endl;
+		exit(1);
+	}
+	if (infile[0] == '-' || infile == "") {
+		cerr << "Tensor file name must be provided as the first argument" << endl;
 		exit(1);
 	}
 
 	try {
-		Convert conv_obj(infile, verbose);
+		Convert conv_obj(infile, dimension, nnz, mode_widths, verbose);
 		conv_obj.write_graph(outfile);
 	}
 	catch (ConvertException & exc) {
 		exc.what();
 	}
-	
 
 	cout << "************************************" << endl;
 	return 0;

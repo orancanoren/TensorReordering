@@ -22,13 +22,20 @@ void help() {
 	usage();
 	cout << "----------------------------------------------------" << endl
 		<< "Available options:" << endl << endl
-		<< "\t-zero_based \t\t coordinates are labeled zero based" << endl
+		<< "\t-one_based \t\t coordinates are labeled one based" << endl
 		<< "\t-no_values \t\t creates a tensor without values" << endl
 		<< "\t-o=FILE_NAME \t\t name of the output file" << endl;
 }
 
 void generateTensor(const string & filename, bool zero_based, bool values_exist, int nnz, const vector<int> & dimensions) {
 	ofstream os(filename);
+	// output header info - dimension widths
+	os << "% ";
+	for (vector<int>::const_iterator it = dimensions.cbegin(); it != dimensions.cend(); it++) {
+		os << *it << " ";
+	}
+	os << endl;
+
 	default_random_engine engine;
 	int lower_bound = zero_based ? 0 : 1;
 	uniform_int_distribution<uint> dist(lower_bound, UINT_MAX);
@@ -68,7 +75,7 @@ int main(int argc, char * argv[]) {
 		arguments[i] = string(argv[i]);
 	}
 
-	bool values_exist = true, zero_based = false;
+	bool values_exist = true, zero_based = true;
 	string output_filename = "random_tensor.tns";
 
 	if (find(begin(arguments), end(arguments), "--help") != end(arguments)) {
@@ -81,9 +88,9 @@ int main(int argc, char * argv[]) {
 		exit(0);
 	}
 
-	if (find(begin(arguments), end(arguments), "-zero_based") != end(arguments)) {
+	if (find(begin(arguments), end(arguments), "-one_based") != end(arguments)) {
 		cout << "zero based tensor generation" << endl;
-		zero_based = true;
+		zero_based = false;
 	}
 	if (find(begin(arguments), end(arguments), "-no_values") != end(arguments)) {
 		cout << "Coordinate only tensor generation" << endl;

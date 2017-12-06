@@ -4,7 +4,6 @@
 #include <string>
 #include <exception>
 #include <iostream>
-#include <vector>
 
 typedef unsigned int uint;
 
@@ -25,17 +24,20 @@ struct Edge {
 
 class Convert {
 public:
-	Convert(const std::string filename, bool verbose = false);
+	Convert(const std::string filename, uint dimension, uint num_vertices, uint * mode_widths, bool verbose = false);
 
 	void write_graph(const std::string & output_file) const;
 private:
 	// Member variables
-	std::vector<std::vector<Edge>> pairCoordinates;
+	Edge ** pairCoordinates;
 	bool verbose;
+	uint * mode_widths;
+	uint nnz;
 	uint dimension;
-	uint num_vertices;
 
-	// Mutators
+	uint num_output_edges;
+
+	// Private Mutators
 	void processCoordinates();
 	static bool compareEdge(const Edge & lhs, const Edge & rhs);
 };

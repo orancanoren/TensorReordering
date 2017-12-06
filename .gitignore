@@ -246,3 +246,5 @@ ModelManifest.xml
 *.out
 *.graph
 *.tns
+*.txt
+*.exe
