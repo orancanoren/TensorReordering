@@ -31,7 +31,7 @@ Convert::Convert(const string filename, uint dimension, uint nnz, uint * mode_wi
 
 	// skip comments in file [comments are marked with "%" in beginning of line]
 	string line;
-	fpos_t prev_position = is.tellg();
+	streampos prev_position = is.tellg();
 	getline(is, line);
 	while (line.at(0) == '%' && !is.eof()) {
 		prev_position = is.tellg();

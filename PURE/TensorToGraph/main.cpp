@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <sstream>
 
 using namespace std;
 
@@ -66,13 +67,15 @@ int main(int argc, char * argv[]) {
 		else if (arg_i == "-n") {
 			if (i + 1 < argc && argv[i + 1][0] != '-') {
 				i++;
-				dimension = _atoi64(argv[i]);
+				istringstream iss(argv[i]);
+				iss >> dimension;
 				mode_widths = new uint[dimension];
 				uint mode = 0;
 				i++;
 				for (; i < argc; i++) {
 					num_widths_read++;
-					mode_widths[mode] = _atoi64(argv[i]);
+					iss = istringstream(argv[i]);
+					iss >> mode_widths[mode];					
 					mode++;
 				}
 				dimensions_provided = true;
@@ -84,7 +87,8 @@ int main(int argc, char * argv[]) {
 		}
 		else if (arg_i == "-nnz") {
 			if (i + 1 < argc) {
-				nnz = _atoi64(argv[i + 1]);
+			  istringstream iss(argv[i + 1]);
+			  iss >> nnz;
 			}
 			else {
 				cerr << "Number of nonzeros must be proivded" << endl;
