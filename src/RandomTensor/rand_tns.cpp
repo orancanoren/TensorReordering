@@ -35,8 +35,8 @@ void generateTensor(const string & filename, bool zero_based, bool values_exist,
 	os << "% ";
 	for (vector<int>::const_iterator it = dimensions.cbegin(); it != dimensions.cend(); it++) {
 		os << *it << " ";
-	}
-	os << endl;
+	}	
+	os << endl << "% " << nnz << endl;
 
 	default_random_engine engine;
 	int lower_bound = zero_based ? 0 : 1;

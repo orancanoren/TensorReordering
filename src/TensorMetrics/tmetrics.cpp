@@ -10,6 +10,8 @@
 #include <cassert>
 #include <iterator>
 #include <chrono>
+#include <cmath>
+#include <string>
 using namespace std;
 
 Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose) 
@@ -22,6 +24,15 @@ Tmetrics::Tmetrics(const string & in_file, bool no_values, bool verbose)
 		exit(1);
 	}
 	// 1 - Determine the dimension of the tensor
+	streampos previous = is.tellg();
+	string buffer;
+	getline(is, buffer);
+	while (buffer.at(0) == '%') {
+	  previous = is.tellg();
+	  getline(is, buffer);
+	}
+	is.seekg(previous);
+	
 	string first_line;
 	getline(is, first_line);
 

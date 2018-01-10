@@ -248,3 +248,5 @@ ModelManifest.xml
 *.tns
 *.txt
 *.exe
+*.gch
+*.o
