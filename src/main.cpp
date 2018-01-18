@@ -13,10 +13,10 @@ void commands() {
   cout << "Available commands" << endl
        << "\trandom_tensor\tcreate a random tensor with specified dimensions and nnz count" << endl
        << "\trandom_graph\tcreate a random graph with specified edge and vertex count" << endl
-       << "\tto_graph\tconvert a compatible tensor file into an k-partite graph" << endl
-       << "\trelabel\trelabel a tensor file with the provided permutation file" << endl
-       << "\trcm\tcompute a RCM permutation of a supplied graph" << endl
-       << "\trabbit\tcompute a rabbit ordering permutation of a supplied graph" << endl;
+       << "\tconvert\t\tconvert a compatible tensor file into an k-partite graph" << endl
+       << "\trelabel\t\trelabel a tensor file with the provided permutation file" << endl
+       << "\trcm\t\tcompute a RCM permutation of a supplied graph" << endl
+       << "\trabbit\t\tcompute a rabbit ordering permutation of a supplied graph" << endl;
 }
 
 void helpGeneral() {
@@ -45,7 +45,7 @@ int main(int argc, char * argv[]) {
     randomtensor::randTensorMain(argc - 1, &argv[1]);
   else if (strcmp(application,"random_graph") == 0)
     randgraph::randGraphMain(argc - 1, &argv[1]);
-  else if (strcmp(application,"to_graph") == 0)
+  else if (strcmp(application,"convert") == 0)
     convert::tensorToGraphMain(argc - 1, &argv[1]);
   else if (strcmp(application, "relabel") == 0)
     relabel::relabelMain(argc - 1, &argv[1]);
